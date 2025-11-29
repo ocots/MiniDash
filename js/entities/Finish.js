@@ -21,10 +21,20 @@ export class Finish extends Entity {
         const pw = Scale.toPixels(this.width);
         const ph = Scale.toPixels(this.height);
         
-        ctx.fillStyle = '#00ff88';
-        ctx.fillRect(px, py, pw, ph);
+        // Drapeau à damiers vertical (alternance de carrés)
+        const squareSize = pw;  // Carrés de la largeur du drapeau
+        const numSquares = Math.ceil(ph / squareSize);
         
-        ctx.strokeStyle = '#ffffff';
+        for (let i = 0; i < numSquares; i++) {
+            // Alterner entre noir et blanc
+            ctx.fillStyle = (i % 2 === 0) ? '#ffffff' : '#222222';
+            const squareY = py + i * squareSize;
+            const squareH = Math.min(squareSize, ph - i * squareSize);
+            ctx.fillRect(px, squareY, pw, squareH);
+        }
+        
+        // Bordure
+        ctx.strokeStyle = '#888888';
         ctx.lineWidth = 2;
         ctx.strokeRect(px, py, pw, ph);
     }
