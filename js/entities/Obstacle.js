@@ -64,11 +64,13 @@ export class Obstacle extends Entity {
     }
     
     // Corps meurtrier (à surcharger si nécessaire)
+    // Par défaut : moitié gauche seulement (bord droit au centre)
+    // Cela évite de mourir en atterrissant "de justesse" sur un rectangle
     getHurtBody() {
         return {
             x: this.x - this.hurtMarginX,
             y: this.y + this.hurtMarginY,
-            width: this.width + this.hurtMarginX * 2,
+            width: this.width / 2 + this.hurtMarginX,  // Moitié gauche seulement
             height: this.height - this.hurtMarginY * 2
         };
     }
