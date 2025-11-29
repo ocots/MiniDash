@@ -1,15 +1,18 @@
 import { CONFIG } from '../config.js';
 import { Entity } from './Entity.js';
+import { Scale } from '../engine/Scale.js';
 import { rectToPolygon, checkAABBCollision } from '../utils/collision.js';
 
 /**
  * Classe de base pour tous les obstacles.
  * Un Obstacle est une Entity qui peut bloquer et/ou tuer le joueur.
  * Gère les 3 corps : physique, meurtrier, image.
+ * Toutes les coordonnées sont en UNITÉS LOGIQUES.
  */
 export class Obstacle extends Entity {
     constructor(x, width, height) {
-        const y = CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT - height;
+        // Calculer y en unités logiques
+        const y = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - height;
         super(x, y, width, height);
         
         this.type = 'obstacle';
@@ -25,7 +28,8 @@ export class Obstacle extends Entity {
         // À surcharger dans les sous-classes
         const img = this.getImageBody();
         ctx.fillStyle = '#888';
-        ctx.fillRect(img.x, img.y, img.width, img.height);
+        ctx.fillRect(Scale.toPixels(img.x), Scale.toPixels(img.y), 
+                     Scale.toPixels(img.width), Scale.toPixels(img.height));
     }
     
     drawDebugHitboxes(ctx) {
@@ -33,13 +37,15 @@ export class Obstacle extends Entity {
         const phys = this.getPhysicsBody();
         ctx.strokeStyle = 'blue';
         ctx.lineWidth = 1;
-        ctx.strokeRect(phys.x, phys.y, phys.width, phys.height);
+        ctx.strokeRect(Scale.toPixels(phys.x), Scale.toPixels(phys.y), 
+                       Scale.toPixels(phys.width), Scale.toPixels(phys.height));
         
         // Corps meurtrier (rouge)
         const hurt = this.getHurtBody();
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 1;
-        ctx.strokeRect(hurt.x, hurt.y, hurt.width, hurt.height);
+        ctx.strokeRect(Scale.toPixels(hurt.x), Scale.toPixels(hurt.y), 
+                       Scale.toPixels(hurt.width), Scale.toPixels(hurt.height));
     }
     
     // Corps image (pour le rendu)

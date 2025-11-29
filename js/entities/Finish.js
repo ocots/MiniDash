@@ -1,24 +1,32 @@
 import { CONFIG } from '../config.js';
 import { Entity } from './Entity.js';
+import { Scale } from '../engine/Scale.js';
 
 /**
  * Finish est une Entity (pas un Obstacle).
  * Elle marque la fin du niveau sans bloquer ni tuer le joueur.
+ * Toutes les coordonnées sont en UNITÉS LOGIQUES.
  */
 export class Finish extends Entity {
-    constructor(x, width = 20) {
-        super(x, 0, width, CONFIG.CANVAS_HEIGHT);
+    constructor(x, width = 0.5) {
+        // Hauteur = toute la hauteur du monde
+        super(x, 0, width, CONFIG.WORLD_HEIGHT);
         this.type = 'finish';
         this.passed = false;
     }
     
     draw(ctx) {
+        const px = Scale.toPixels(this.x);
+        const py = Scale.toPixels(this.y);
+        const pw = Scale.toPixels(this.width);
+        const ph = Scale.toPixels(this.height);
+        
         ctx.fillStyle = '#00ff88';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillRect(px, py, pw, ph);
         
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        ctx.strokeRect(px, py, pw, ph);
     }
     
     // Finish n'est pas un obstacle, ces méthodes ne font rien

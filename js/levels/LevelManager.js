@@ -5,8 +5,8 @@ import { RectangleLarge } from '../entities/RectangleLarge.js';
 import { Finish } from '../entities/Finish.js';
 import { level1 } from './level1.js';
 
-// Conversion mètres -> pixels
-const metersToPixels = (meters) => meters * CONFIG.PIXELS_PER_METER;
+// Conversion mètres -> unités logiques
+const metersToUnits = (meters) => meters * CONFIG.UNITS_PER_METER;
 
 export class LevelManager {
     constructor() {
@@ -54,34 +54,34 @@ export class LevelManager {
     
     /**
      * Crée une entité de niveau à partir de ses données.
-     * Toutes les dimensions (x, width, height, relativeX) sont en mètres, converties en pixels ici.
+     * Toutes les dimensions (x, width, height, relativeX) sont en mètres, converties en unités logiques ici.
      * @param {Object} entityData - { type, x, width, height, carried? } (tout en mètres)
      */
     createObstacle(entityData) {
         const { type } = entityData;
-        // Convertir toutes les dimensions de mètres en pixels
-        const xPixels = metersToPixels(entityData.x);
-        const widthPixels = metersToPixels(entityData.width);
-        const heightPixels = metersToPixels(entityData.height);
+        // Convertir toutes les dimensions de mètres en unités logiques
+        const xUnits = metersToUnits(entityData.x);
+        const widthUnits = metersToUnits(entityData.width);
+        const heightUnits = metersToUnits(entityData.height);
         
         if (type === 'triangle') {
-            return new Triangle(xPixels, widthPixels, heightPixels);
+            return new Triangle(xUnits, widthUnits, heightUnits);
         } else if (type === 'rectangle') {
-            return new Rectangle(xPixels, widthPixels, heightPixels);
+            return new Rectangle(xUnits, widthUnits, heightUnits);
         } else if (type === 'rectangleLarge') {
             // Les obstacles portés sont définis dans entityData.carried
             // Format: [{ type, relativeX, width, height }, ...] (tout en mètres)
-            // Convertir toutes les dimensions en pixels
+            // Convertir toutes les dimensions en unités logiques
             const carriedObstacles = (entityData.carried || []).map(c => ({
                 type: c.type,
-                relativeX: metersToPixels(c.relativeX),
-                width: metersToPixels(c.width),
-                height: metersToPixels(c.height)
+                relativeX: metersToUnits(c.relativeX),
+                width: metersToUnits(c.width),
+                height: metersToUnits(c.height)
             }));
-            return new RectangleLarge(xPixels, widthPixels, heightPixels, carriedObstacles);
+            return new RectangleLarge(xUnits, widthUnits, heightUnits, carriedObstacles);
         } else if (type === 'finish') {
             // Large ligne verticale de fin de niveau
-            return new Finish(xPixels, widthPixels || 20);
+            return new Finish(xUnits, widthUnits || 0.5);
         }
         
         return null;

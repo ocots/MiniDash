@@ -1,30 +1,34 @@
 import { CONFIG } from '../config.js';
+import { Scale } from '../engine/Scale.js';
 import { rectToPolygon } from '../utils/collision.js';
 
+/**
+ * Le joueur - toutes les coordonnées sont en UNITÉS LOGIQUES.
+ */
 export class Player {
     constructor() {
+        // Position en unités logiques
         this.x = CONFIG.PLAYER_X;
-        this.y = CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT - CONFIG.PLAYER_SIZE;
         this.width = CONFIG.PLAYER_SIZE;
         this.height = CONFIG.PLAYER_SIZE;
+        this.groundY = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - this.height;
+        this.y = this.groundY;
         
-        // Marge pour le corps meurtrier (légèrement plus grand)
-        this.hurtMargin = CONFIG.PLAYER_HURT_MARGIN || 4;
+        // Marge pour le corps meurtrier (en unités)
+        this.hurtMargin = CONFIG.PLAYER_HURT_MARGIN;
         
         this.velocityY = 0;
         this.isOnGround = true;
         this.isJumping = false;
-        
-        this.groundY = CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT - this.height;
     }
     
     update(dt) {
         // Sauvegarder l'état précédent
         const wasOnGround = this.isOnGround;
         
-        // Appliquer la gravité
-        this.velocityY += CONFIG.GRAVITY;
-        this.y += this.velocityY;
+        // Appliquer la gravité (en unités/s², multiplié par dt pour être indépendant du framerate)
+        this.velocityY += CONFIG.GRAVITY * dt;
+        this.y += this.velocityY * dt;
         
         // Vérifier le sol
         if (this.y >= this.groundY) {
@@ -42,14 +46,20 @@ export class Player {
     }
     
     draw(ctx) {
+        // Convertir en pixels pour le rendu
+        const px = Scale.toPixels(this.x);
+        const py = Scale.toPixels(this.y);
+        const pw = Scale.toPixels(this.width);
+        const ph = Scale.toPixels(this.height);
+        
         // Corps image (visuel)
         ctx.fillStyle = CONFIG.PLAYER_COLOR;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillRect(px, py, pw, ph);
         
         // Bordure
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        ctx.strokeRect(px, py, pw, ph);
         
         // Debug: afficher les hitboxes (décommenter pour debug)
         // this.drawDebugHitboxes(ctx);
@@ -60,13 +70,15 @@ export class Player {
         const phys = this.getPhysicsBody();
         ctx.strokeStyle = 'blue';
         ctx.lineWidth = 1;
-        ctx.strokeRect(phys.x, phys.y, phys.width, phys.height);
+        ctx.strokeRect(Scale.toPixels(phys.x), Scale.toPixels(phys.y), 
+                       Scale.toPixels(phys.width), Scale.toPixels(phys.height));
         
         // Corps meurtrier (rouge)
         const hurt = this.getHurtBody();
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 1;
-        ctx.strokeRect(hurt.x, hurt.y, hurt.width, hurt.height);
+        ctx.strokeRect(Scale.toPixels(hurt.x), Scale.toPixels(hurt.y), 
+                       Scale.toPixels(hurt.width), Scale.toPixels(hurt.height));
     }
     
     jump() {

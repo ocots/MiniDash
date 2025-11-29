@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { Obstacle } from './Obstacle.js';
+import { Scale } from '../engine/Scale.js';
 
 /**
  * Rectangle : obstacle sur lequel on peut marcher.
@@ -10,21 +11,25 @@ export class Rectangle extends Obstacle {
         super(x, width, height);
         this.type = 'rectangle';
         
-        // Marges pour le corps meurtrier
-        // Plus large sur les côtés, moins haut (pas mortel dessus/dessous)
-        this.hurtMarginX = CONFIG.RECTANGLE_HURT_MARGIN_X || 4;
-        this.hurtMarginY = CONFIG.RECTANGLE_HURT_MARGIN_Y || 8;
+        // Marges pour le corps meurtrier (en unités)
+        this.hurtMarginX = CONFIG.RECTANGLE_HURT_MARGIN_X;
+        this.hurtMarginY = CONFIG.RECTANGLE_HURT_MARGIN_Y;
     }
     
     draw(ctx) {
         const img = this.getImageBody();
+        const px = Scale.toPixels(img.x);
+        const py = Scale.toPixels(img.y);
+        const pw = Scale.toPixels(img.width);
+        const ph = Scale.toPixels(img.height);
+        
         ctx.fillStyle = CONFIG.RECTANGLE_COLOR;
-        ctx.fillRect(img.x, img.y, img.width, img.height);
+        ctx.fillRect(px, py, pw, ph);
         
         // Bordure
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
-        ctx.strokeRect(img.x, img.y, img.width, img.height);
+        ctx.strokeRect(px, py, pw, ph);
         
         // Debug: afficher les hitboxes (décommenter pour debug)
         // this.drawDebugHitboxes(ctx);

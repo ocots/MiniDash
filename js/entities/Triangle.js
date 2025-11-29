@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { Entity } from './Entity.js';
+import { Scale } from '../engine/Scale.js';
 import { createTrianglePolygon, checkPolygonCollision } from '../utils/collision.js';
 
 /**
@@ -7,16 +8,17 @@ import { createTrianglePolygon, checkPolygonCollision } from '../utils/collision
  * Hérite de Entity (pas de Obstacle car collision polygonale spécifique).
  * Collision polygonale précise.
  * On ne peut pas marcher dessus.
+ * Toutes les coordonnées sont en UNITÉS LOGIQUES.
  */
 export class Triangle extends Entity {
     constructor(x, width, height) {
-        const y = CONFIG.CANVAS_HEIGHT - CONFIG.GROUND_HEIGHT - height;
+        const y = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - height;
         super(x, y, width, height);
         
         this.type = 'triangle';
         
-        // Marge pour le corps meurtrier (légèrement plus grand, centré)
-        this.hurtMargin = CONFIG.TRIANGLE_HURT_MARGIN || 4;
+        // Marge pour le corps meurtrier (en unités)
+        this.hurtMargin = CONFIG.TRIANGLE_HURT_MARGIN;
         
         this.passed = false;
     }
@@ -26,9 +28,9 @@ export class Triangle extends Entity {
         
         ctx.fillStyle = CONFIG.TRIANGLE_COLOR;
         ctx.beginPath();
-        ctx.moveTo(img[0].x, img[0].y);
-        ctx.lineTo(img[1].x, img[1].y);
-        ctx.lineTo(img[2].x, img[2].y);
+        ctx.moveTo(Scale.toPixels(img[0].x), Scale.toPixels(img[0].y));
+        ctx.lineTo(Scale.toPixels(img[1].x), Scale.toPixels(img[1].y));
+        ctx.lineTo(Scale.toPixels(img[2].x), Scale.toPixels(img[2].y));
         ctx.closePath();
         ctx.fill();
         
@@ -46,9 +48,9 @@ export class Triangle extends Entity {
         ctx.strokeStyle = 'blue';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(phys[0].x, phys[0].y);
-        ctx.lineTo(phys[1].x, phys[1].y);
-        ctx.lineTo(phys[2].x, phys[2].y);
+        ctx.moveTo(Scale.toPixels(phys[0].x), Scale.toPixels(phys[0].y));
+        ctx.lineTo(Scale.toPixels(phys[1].x), Scale.toPixels(phys[1].y));
+        ctx.lineTo(Scale.toPixels(phys[2].x), Scale.toPixels(phys[2].y));
         ctx.closePath();
         ctx.stroke();
         
@@ -57,9 +59,9 @@ export class Triangle extends Entity {
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(hurt[0].x, hurt[0].y);
-        ctx.lineTo(hurt[1].x, hurt[1].y);
-        ctx.lineTo(hurt[2].x, hurt[2].y);
+        ctx.moveTo(Scale.toPixels(hurt[0].x), Scale.toPixels(hurt[0].y));
+        ctx.lineTo(Scale.toPixels(hurt[1].x), Scale.toPixels(hurt[1].y));
+        ctx.lineTo(Scale.toPixels(hurt[2].x), Scale.toPixels(hurt[2].y));
         ctx.closePath();
         ctx.stroke();
     }

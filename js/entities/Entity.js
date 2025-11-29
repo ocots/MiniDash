@@ -1,11 +1,14 @@
 import { CONFIG } from '../config.js';
+import { Scale } from '../engine/Scale.js';
 
 /**
  * Classe de base pour toutes les entités du jeu.
- * Une Entity peut se déplacer, se dessiner et se mettre à jour.
+ * Toutes les coordonnées sont en UNITÉS LOGIQUES.
+ * La conversion en pixels se fait au moment du rendu via Scale.
  */
 export class Entity {
     constructor(x, y, width, height) {
+        // Coordonnées en unités logiques
         this.x = x;
         this.y = y;
         this.width = width;
@@ -13,8 +16,8 @@ export class Entity {
     }
     
     update(dt) {
-        // Par défaut, les entités se déplacent vers la gauche avec le scroll
-        this.x -= CONFIG.SCROLL_SPEED;
+        // Par défaut, les entités se déplacent vers la gauche avec le scroll (en unités/s)
+        this.x -= CONFIG.SCROLL_SPEED * dt;
     }
     
     draw(ctx) {
@@ -31,6 +34,16 @@ export class Entity {
             y: this.y,
             width: this.width,
             height: this.height
+        };
+    }
+    
+    // Convertit les coordonnées en pixels pour le rendu
+    toPixelBounds() {
+        return {
+            x: Scale.toPixels(this.x),
+            y: Scale.toPixels(this.y),
+            width: Scale.toPixels(this.width),
+            height: Scale.toPixels(this.height)
         };
     }
 }

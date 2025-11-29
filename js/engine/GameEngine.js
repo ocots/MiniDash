@@ -1,11 +1,13 @@
 import { CONFIG } from '../config.js';
+import { Scale } from './Scale.js';
 
 export class GameEngine {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.canvas.width = CONFIG.CANVAS_WIDTH;
-        this.canvas.height = CONFIG.CANVAS_HEIGHT;
+        
+        // Initialiser le système de scale responsive
+        Scale.init(canvas);
         
         this.isRunning = false;
         this.lastTime = 0;
@@ -54,8 +56,8 @@ export class GameEngine {
         }
         
         // Mise à jour de la distance (en mètres)
-        // SCROLL_SPEED est en pixels/frame, on convertit en mètres
-        this.distance += (CONFIG.SCROLL_SPEED / CONFIG.PIXELS_PER_METER) * dt * 60;
+        // SCROLL_SPEED est en unités/seconde, on convertit en mètres
+        this.distance += (CONFIG.SCROLL_SPEED / CONFIG.UNITS_PER_METER) * dt;
         
         // Mise à jour des entités
         for (const entity of this.entities) {
@@ -70,13 +72,14 @@ export class GameEngine {
         this.ctx.fillStyle = CONFIG.SKY_COLOR;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Dessiner le sol
+        // Dessiner le sol (converti en pixels)
+        const groundHeight = Scale.toPixels(CONFIG.GROUND_HEIGHT);
         this.ctx.fillStyle = CONFIG.GROUND_COLOR;
         this.ctx.fillRect(
             0, 
-            this.canvas.height - CONFIG.GROUND_HEIGHT, 
+            this.canvas.height - groundHeight, 
             this.canvas.width, 
-            CONFIG.GROUND_HEIGHT
+            groundHeight
         );
         
         // Dessiner les entités
