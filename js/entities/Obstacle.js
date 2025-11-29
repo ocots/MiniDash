@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
 import { Entity } from './Entity.js';
-import { rectToPolygon, checkAABBCollision } from '../utils/Collision.js';
+import { rectToPolygon, checkAABBCollision } from '../utils/collision.js';
 
 /**
  * Classe de base pour tous les obstacles.

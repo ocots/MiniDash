@@ -1,5 +1,5 @@
 import { CONFIG } from '../config.js';
-import { rectToPolygon } from '../utils/Collision.js';
+import { rectToPolygon } from '../utils/collision.js';
 
 export class Player {
     constructor() {

@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
 import { Entity } from './Entity.js';
-import { createTrianglePolygon, checkPolygonCollision } from '../utils/Collision.js';
+import { createTrianglePolygon, checkPolygonCollision } from '../utils/collision.js';
 
 /**
  * Triangle : pic mortel.
