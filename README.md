@@ -1,72 +1,63 @@
-# Geometry Dash - Mini
+# MiniDash
 
-Un jeu de type runner 2D minimaliste en JavaScript vanilla.
+Un jeu de type runner 2D minimaliste en JavaScript vanilla, inspiré de Geometry Dash.
 
-## 🎮 Comment jouer
+🎮 **Jouer en ligne** : [https://ocots.github.io/MiniDash/](https://ocots.github.io/MiniDash/)
 
-- **Espace** ou **Clic souris** : Sauter
-- **Maintenir** : Rebonds automatiques
-- **Objectif** : Éviter les obstacles et parcourir la plus grande distance
+## 🎮 Contrôles
 
-## 🚀 Lancer le jeu
+| Touche | Action |
+|--------|--------|
+| **Espace** / **Clic** / **Tactile** | Sauter |
+| **Maintenir** | Rebonds automatiques |
+| **P** ou **B** | Pause |
+| **Entrée** ou **N** | Recommencer (après Game Over) |
 
-### En local
-Ouvrez simplement `index.html` dans votre navigateur.
+## 🚀 Lancer le jeu en local
 
-### Avec un serveur local (recommandé)
 ```bash
 # Python 3
-python -m http.server 8000
+python -m http.server 8080
 
 # Ou avec Node.js
 npx serve
 ```
 
-Puis ouvrez `http://localhost:8000` dans votre navigateur.
-
-## 📦 Déploiement sur GitHub Pages
-
-1. Créer un repo GitHub
-2. Pousser le code
-3. Aller dans Settings > Pages
-4. Sélectionner la branche `main` comme source
-5. Le jeu sera accessible à `https://votre-username.github.io/geometry_dash/`
+Puis ouvrez `http://localhost:8080` dans votre navigateur.
 
 ## 🏗️ Architecture
 
 ```
-geometry_dash/
-├── index.html              # Point d'entrée
-├── css/
-│   └── style.css          # Styles
-├── js/
-│   ├── main.js            # Logique principale
-│   ├── config.js          # Configuration
-│   ├── engine/
-│   │   └── GameEngine.js  # Moteur de jeu
-│   ├── entities/
-│   │   ├── Player.js      # Joueur
-│   │   └── Obstacle.js    # Obstacles
-│   └── utils/
-│       └── collision.js   # Détection collisions
-└── README.md
+MiniDash/
+├── index.html
+├── css/style.css
+└── js/
+    ├── main.js              # Logique principale
+    ├── config.js            # Configuration gameplay
+    ├── engine/
+    │   ├── GameEngine.js    # Moteur de jeu
+    │   └── Scale.js         # Système responsive
+    ├── entities/
+    │   ├── Entity.js        # Classe de base
+    │   ├── Player.js        # Joueur
+    │   ├── Obstacle.js      # Obstacle de base
+    │   ├── Rectangle.js     # Plateforme
+    │   ├── RectangleLarge.js # Grande plateforme
+    │   ├── Triangle.js      # Pic mortel
+    │   └── Finish.js        # Ligne d'arrivée
+    ├── levels/
+    │   ├── LevelManager.js  # Gestionnaire de niveaux
+    │   └── level1.js        # Niveau 1
+    └── utils/
+        └── collision.js     # Détection collisions
 ```
 
-## ✨ Fonctionnalités actuelles
+## ✨ Fonctionnalités
 
-- ✅ Joueur carré avec physique (gravité, sauts)
-- ✅ Rebonds automatiques (maintien touche)
-- ✅ Défilement automatique
-- ✅ Obstacles aléatoires
-- ✅ Détection de collision
-- ✅ Score (distance parcourue)
-- ✅ Game over et restart
-
-## 🔜 Améliorations futures
-
-- Plateformes flottantes
-- Différents types d'obstacles (triangles, pics)
-- Système de niveaux
-- Musique et effets sonores
-- Particules et animations
-- Meilleur design visuel
+- Gameplay responsive (PC, tablette, mobile)
+- Physique réaliste (gravité, sauts)
+- Rebonds automatiques
+- Niveaux personnalisables (en mètres)
+- Différents obstacles (rectangles, triangles, grandes plateformes)
+- Ligne d'arrivée
+- Pause et restart
