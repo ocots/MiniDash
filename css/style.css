@@ -43,6 +43,61 @@ body {
     pointer-events: none;
 }
 
+/* Menu de démarrage */
+#start-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+    pointer-events: all;
+}
+
+#start-menu.hidden {
+    display: none;
+}
+
+#start-menu h1 {
+    font-size: 12vmin;
+    margin-bottom: 2vmin;
+    color: #4ecdc4;
+    text-shadow: 0.4vmin 0.4vmin 0.8vmin rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.3vmin;
+}
+
+#start-menu .subtitle {
+    font-size: 3vmin;
+    margin-bottom: 4vmin;
+    color: #ccc;
+}
+
+#start-btn {
+    padding: 2vmin 6vmin;
+    font-size: 4vmin;
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: #fff;
+    border: none;
+    border-radius: 1vmin;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0.5vmin 1.5vmin rgba(78, 205, 196, 0.4);
+}
+
+#start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0.8vmin 2vmin rgba(78, 205, 196, 0.6);
+}
+
+#start-menu .controls-hint {
+    margin-top: 4vmin;
+    font-size: 2vmin;
+    color: #888;
+    display: flex;
+    justify-content: center;
+    gap: 3vmin;
+}
+
 #score {
     position: absolute;
     top: 2vmin;
@@ -51,6 +106,10 @@ body {
     font-size: 3vmin;
     font-weight: bold;
     text-shadow: 0.2vmin 0.2vmin 0.4vmin rgba(0, 0, 0, 0.5);
+}
+
+#score.hidden {
+    display: none;
 }
 
 #game-over {

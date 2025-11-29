@@ -12,7 +12,11 @@ class Game {
         this.levelManager = new LevelManager();
         this.gameOver = false;
         this.paused = false;
+        this.started = false;  // Le jeu n'a pas encore commencé
         
+        // Éléments UI
+        this.startMenuElement = document.getElementById('start-menu');
+        this.startBtn = document.getElementById('start-btn');
         this.scoreElement = document.getElementById('score');
         this.gameOverElement = document.getElementById('game-over');
         this.finalScoreElement = document.getElementById('final-score');
@@ -26,6 +30,27 @@ class Game {
     }
     
     init() {
+        // Préparer le niveau (mais ne pas démarrer)
+        this.prepareLevel();
+        
+        // Contrôles
+        this.setupControls();
+        
+        // Bouton start
+        this.startBtn.addEventListener('click', () => this.startGame());
+        
+        // Bouton restart (game over)
+        this.restartBtn.addEventListener('click', () => this.restart());
+        // Bouton restart (fin de niveau)
+        if (this.levelRestartBtn) {
+            this.levelRestartBtn.addEventListener('click', () => this.restart());
+        }
+        
+        // Afficher le menu et faire un premier rendu statique
+        this.engine.render();
+    }
+    
+    prepareLevel() {
         // Créer le joueur
         this.player = new Player();
         this.engine.addEntity(this.player);
@@ -41,16 +66,12 @@ class Game {
         
         console.log(`Niveau chargé: ${this.levelManager.getLevelName()}`);
         console.log(`Nombre d'obstacles: ${this.levelManager.getTotalObstacles()}`);
-        
-        // Contrôles
-        this.setupControls();
-        
-        // Bouton restart (game over)
-        this.restartBtn.addEventListener('click', () => this.restart());
-        // Bouton restart (fin de niveau)
-        if (this.levelRestartBtn) {
-            this.levelRestartBtn.addEventListener('click', () => this.restart());
-        }
+    }
+    
+    startGame() {
+        this.started = true;
+        this.startMenuElement.classList.add('hidden');
+        this.scoreElement.classList.remove('hidden');
         
         // Démarrer le jeu
         this.engine.start();
@@ -58,11 +79,18 @@ class Game {
     }
     
     setupControls() {
-        // Clavier
+        // Clavier - Saut
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !this.gameOver) {
+            if (e.code === 'Space') {
                 e.preventDefault();
-                this.player.startJump();
+                // Démarrer le jeu si pas encore commencé
+                if (!this.started) {
+                    this.startGame();
+                    return;
+                }
+                if (!this.gameOver && !this.paused) {
+                    this.player.startJump();
+                }
             }
         });
         
@@ -75,23 +103,31 @@ class Game {
         
         // Pause avec P ou B
         document.addEventListener('keydown', (e) => {
-            if ((e.code === 'KeyP' || e.code === 'KeyB') && !this.gameOver) {
+            if ((e.code === 'KeyP' || e.code === 'KeyB') && this.started && !this.gameOver) {
                 e.preventDefault();
                 this.togglePause();
             }
         });
         
-        // Restart avec Entrée ou N quand game over ou niveau terminé
+        // Entrée : démarrer ou restart
         document.addEventListener('keydown', (e) => {
-            if ((e.code === 'Enter' || e.code === 'KeyN') && this.gameOver) {
+            if (e.code === 'Enter' || e.code === 'KeyN') {
                 e.preventDefault();
-                this.restart();
+                if (!this.started) {
+                    this.startGame();
+                } else if (this.gameOver) {
+                    this.restart();
+                }
             }
         });
         
         // Souris/tactile
         this.canvas.addEventListener('mousedown', () => {
-            if (!this.gameOver) {
+            if (!this.started) {
+                this.startGame();
+                return;
+            }
+            if (!this.gameOver && !this.paused) {
                 this.player.startJump();
             }
         });
@@ -102,7 +138,11 @@ class Game {
         
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (!this.gameOver) {
+            if (!this.started) {
+                this.startGame();
+                return;
+            }
+            if (!this.gameOver && !this.paused) {
                 this.player.startJump();
             }
         });

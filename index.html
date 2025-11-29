@@ -10,7 +10,17 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div id="ui">
-            <div id="score">Distance: 0m</div>
+            <div id="start-menu">
+                <h1>MiniDash</h1>
+                <p class="subtitle">Évite les obstacles, atteins l'arrivée !</p>
+                <button id="start-btn">▶ Jouer</button>
+                <div class="controls-hint">
+                    <span>Espace / Clic = Sauter</span>
+                    <span>P / B = Pause</span>
+                    <span>Entrée / N = Recommencer</span>
+                </div>
+            </div>
+            <div id="score" class="hidden">Distance: 0m</div>
             <div id="game-over" class="hidden">
                 <h2>Game Over!</h2>
                 <p>Distance: <span id="final-score">0</span>m</p>
