@@ -17,6 +17,7 @@
                 <div class="menu-buttons">
                     <button id="start-btn">▶ Jouer</button>
                     <button id="select-level-btn">📋</button>
+                    <button id="select-skin-btn">🎨</button>
                 </div>
                 <p id="current-level-name" class="level-name">Niveau 1</p>
                 <div class="controls-hint">
@@ -31,6 +32,27 @@
                 <button id="cancel-level-select-btn">Annuler</button>
                 <div class="controls-hint">
                     <span>Échap = Annuler</span>
+                </div>
+            </div>
+            <div id="skin-select-menu" class="hidden">
+                <h2>Choisir un skin</h2>
+                <div id="skin-category-tabs">
+                    <button class="skin-tab active" data-category="all">Tous</button>
+                    <button class="skin-tab" data-category="static">Couleurs</button>
+                    <button class="skin-tab" data-category="dynamic">Animés</button>
+                </div>
+                <div id="skin-grid-container">
+                    <div id="skin-grid"></div>
+                </div>
+                <div id="skin-preview-area">
+                    <canvas id="skin-preview-canvas" width="80" height="80"></canvas>
+                    <span id="skin-preview-name">Classique</span>
+                </div>
+                <button id="cancel-skin-select-btn">Fermer</button>
+                <div class="controls-hint">
+                    <span>Flèches = Naviguer</span>
+                    <span>Entrée = Confirmer</span>
+                    <span>Échap = Fermer</span>
                 </div>
             </div>
             <div id="score" class="hidden">Distance: 0m</div>

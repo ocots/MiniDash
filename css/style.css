@@ -497,3 +497,206 @@ body {
         display: none !important;
     }
 }
+
+/* ========== Menu de sélection de skin ========== */
+
+#select-skin-btn {
+    padding: 2vmin 2.5vmin;
+    font-size: 4vmin;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: #fff;
+    border: none;
+    border-radius: 1vmin;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0.5vmin 1.5vmin rgba(255, 107, 107, 0.4);
+}
+
+#select-skin-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0.8vmin 2vmin rgba(255, 107, 107, 0.6);
+}
+
+#skin-select-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 3vmin;
+    border-radius: 1.5vmin;
+    text-align: center;
+    color: #fff;
+    pointer-events: all;
+    min-width: 50vmin;
+    max-width: 80vmin;
+}
+
+#skin-select-menu.hidden {
+    display: none;
+}
+
+#skin-select-menu h2 {
+    font-size: 5vmin;
+    margin-bottom: 2vmin;
+    color: #ff6b6b;
+}
+
+/* Onglets de catégorie */
+#skin-category-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1vmin;
+    margin-bottom: 2vmin;
+}
+
+.skin-tab {
+    padding: 1vmin 2vmin;
+    font-size: 2vmin;
+    background: #444;
+    color: #aaa;
+    border: none;
+    border-radius: 0.5vmin;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.skin-tab:hover {
+    background: #555;
+    color: #fff;
+}
+
+.skin-tab.active {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: #fff;
+}
+
+/* Grille de skins */
+#skin-grid-container {
+    max-height: 35vh;
+    overflow-y: auto;
+    margin-bottom: 2vmin;
+    padding: 1vmin;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1vmin;
+}
+
+#skin-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5vmin;
+    justify-items: center;
+}
+
+.skin-item {
+    width: 8vmin;
+    height: 8vmin;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 0.3vmin solid transparent;
+    overflow: hidden;
+    position: relative;
+}
+
+.skin-item:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0.5vmin 1.5vmin rgba(255, 255, 255, 0.3);
+}
+
+.skin-item.selected {
+    border-color: #ffd700;
+    box-shadow: 0 0 1.5vmin rgba(255, 215, 0, 0.6);
+}
+
+.skin-item canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Badge pour les skins animés */
+.skin-item.animated::after {
+    content: '✨';
+    position: absolute;
+    top: 0.3vmin;
+    right: 0.3vmin;
+    font-size: 1.5vmin;
+}
+
+/* Zone de prévisualisation */
+#skin-preview-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2vmin;
+    margin-bottom: 2vmin;
+    padding: 1.5vmin;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1vmin;
+}
+
+#skin-preview-canvas {
+    width: 10vmin;
+    height: 10vmin;
+    border-radius: 0.5vmin;
+    border: 0.2vmin solid #fff;
+}
+
+#skin-preview-name {
+    font-size: 3vmin;
+    font-weight: bold;
+    color: #fff;
+}
+
+#cancel-skin-select-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.5vmin;
+    background: #666;
+    color: #fff;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#cancel-skin-select-btn:hover {
+    background: #888;
+}
+
+#skin-select-menu .controls-hint {
+    margin-top: 2vmin;
+    font-size: 2vmin;
+    color: #888;
+}
+
+/* Scrollbar personnalisée pour la grille */
+#skin-grid-container::-webkit-scrollbar {
+    width: 0.8vmin;
+}
+
+#skin-grid-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.4vmin;
+}
+
+#skin-grid-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 0.4vmin;
+}
+
+#skin-grid-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive : moins de colonnes sur petit écran */
+@media (max-width: 600px) {
+    #skin-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .skin-item {
+        width: 10vmin;
+        height: 10vmin;
+    }
+}

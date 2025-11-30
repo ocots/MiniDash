@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { Scale } from './Scale.js';
+import { skinManager } from '../skins/index.js';
 
 export class GameEngine {
     constructor(canvas) {
@@ -58,6 +59,9 @@ export class GameEngine {
         // Mise à jour de la distance (en mètres)
         // SCROLL_SPEED est en unités/seconde, on convertit en mètres
         this.distance += (CONFIG.SCROLL_SPEED / CONFIG.UNITS_PER_METER) * dt;
+        
+        // Mise à jour des skins dynamiques
+        skinManager.update(dt);
         
         // Mise à jour des entités
         for (const entity of this.entities) {

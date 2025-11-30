@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { Scale } from '../engine/Scale.js';
 import { rectToPolygon } from '../utils/collision.js';
+import { skinManager } from '../skins/index.js';
 
 /**
  * Le joueur - toutes les coordonnées sont en UNITÉS LOGIQUES.
@@ -24,6 +25,9 @@ export class Player {
         // Mode Debug : indicateur de collision
         this.isColliding = false;
         this.collisionFlashTimer = 0;
+        
+        // Référence au gestionnaire de skins
+        this.skinManager = skinManager;
     }
     
     update(dt) {
@@ -55,21 +59,16 @@ export class Player {
     }
     
     draw(ctx) {
-        // Convertir en pixels pour le rendu
-        const px = Scale.toPixels(this.x);
-        const py = Scale.toPixels(this.y);
-        const pw = Scale.toPixels(this.width);
-        const ph = Scale.toPixels(this.height);
+        // Obtenir le skin courant
+        const skin = this.skinManager.getCurrentSkin();
         
-        // Corps image (visuel) - rouge si collision en mode debug
-        const isFlashing = this.collisionFlashTimer > 0;
-        ctx.fillStyle = isFlashing ? CONFIG.DEBUG.COLLISION_FLASH_COLOR : CONFIG.PLAYER_COLOR;
-        ctx.fillRect(px, py, pw, ph);
+        // Options pour le rendu du skin
+        const options = {
+            isFlashing: this.collisionFlashTimer > 0
+        };
         
-        // Bordure (blanche ou rouge selon collision)
-        ctx.strokeStyle = isFlashing ? '#ff6666' : '#fff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(px, py, pw, ph);
+        // Dessiner le skin
+        skin.draw(ctx, this.x, this.y, this.width, this.height, options);
         
         // Debug: afficher les hitboxes si demandé
         if (this.showHitboxes) {
