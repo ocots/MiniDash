@@ -664,10 +664,33 @@ body {
     background: #888;
 }
 
+#confirm-skin-select-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.5vmin;
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: #fff;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
+
+#confirm-skin-select-btn:hover {
+    transform: scale(1.02);
+    background: linear-gradient(135deg, #5de0d7 0%, #52b89e 100%);
+}
+
 #skin-select-menu .controls-hint {
     margin-top: 2vmin;
     font-size: 2vmin;
     color: #888;
+}
+
+/* Espacement plus large pour les contrôles du menu skin */
+.skin-controls-hint {
+    display: flex;
+    justify-content: center;
+    gap: 5vmin;
 }
 
 /* Scrollbar personnalisée pour la grille */

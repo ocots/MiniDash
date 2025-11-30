@@ -1,5 +1,7 @@
 import { CONFIG } from './config.js';
 import { GameEngine } from './engine/GameEngine.js';
+import { GameStateManager, GameStates } from './engine/GameState.js';
+import { InputManager, Actions } from './engine/InputManager.js';
 import { Player } from './entities/Player.js';
 import { LevelManager } from './levels/LevelManager.js';
 import { skinManager } from './skins/index.js';
@@ -9,52 +11,89 @@ const STORAGE_KEY = 'minidash_selected_level';
 const DEBUG_STORAGE_KEY = 'minidash_debug_mode';
 const SKIN_STORAGE_KEY = 'minidash_selected_skin';
 
+/**
+ * Classe principale du jeu.
+ * Utilise une machine à états pour gérer les différents écrans et transitions.
+ */
 class Game {
     constructor() {
+        // Moteur de jeu
         this.canvas = document.getElementById('gameCanvas');
         this.engine = new GameEngine(this.canvas);
+        
+        // Machine à états
+        this.state = new GameStateManager(GameStates.MAIN_MENU);
+        
+        // Gestionnaire d'entrées
+        this.input = new InputManager(this.state);
+        this.input.setCanvas(this.canvas);
+        
+        // Entités
         this.player = null;
         this.obstacles = [];
         this.levelManager = new LevelManager();
-        this.gameOver = false;
-        this.paused = false;
-        this.started = false;  // Le jeu n'a pas encore commencé
-        this.levelSelectOpen = false;  // Menu de sélection de niveau ouvert
-        this.skinSelectOpen = false;    // Menu de sélection de skin ouvert
         
-        // Niveau sélectionné (récupéré depuis localStorage ou 0 par défaut)
+        // Niveau sélectionné
         this.selectedLevelIndex = this.loadSelectedLevel();
         
-        // Skin sélectionné (récupéré depuis localStorage)
+        // Skin sélectionné
         this.loadSelectedSkin();
         
         // Mode Debug
         this.debugMode = this.loadDebugMode();
         
-        // Éléments UI
+        // Skin selection state
+        this.currentSkinCategory = 'all';
+        this.skinGridColumns = 5;
+        this.skinPreviewAnimationId = null;
+        this.pendingSkinId = null; // Skin en cours de sélection (avant validation)
+        
+        // Récupérer les éléments UI
+        this._initUIElements();
+        
+        // Configurer les callbacks d'états
+        this._setupStateCallbacks();
+        
+        // Configurer les handlers d'actions
+        this._setupActionHandlers();
+        
+        // Configurer les boutons UI
+        this._setupUIButtons();
+        
+        // Initialisation
+        this._init();
+    }
+    
+    // ========== Initialisation ==========
+    
+    _initUIElements() {
+        // Menu principal
         this.startMenuElement = document.getElementById('start-menu');
         this.startBtn = document.getElementById('start-btn');
+        this.currentLevelNameElement = document.getElementById('current-level-name');
+        
+        // Score
         this.scoreElement = document.getElementById('score');
+        
+        // Game Over
         this.gameOverElement = document.getElementById('game-over');
         this.finalScoreElement = document.getElementById('final-score');
         this.restartBtn = document.getElementById('restart-btn');
+        this.mainMenuBtn = document.getElementById('main-menu-btn');
         
+        // Level Complete
         this.levelCompleteElement = document.getElementById('level-complete');
         this.levelFinalScoreElement = document.getElementById('level-final-score');
         this.levelRestartBtn = document.getElementById('level-restart-btn');
+        this.levelMainMenuBtn = document.getElementById('level-main-menu-btn');
         
-        // Éléments UI pour la sélection de niveau
+        // Level Select
         this.selectLevelBtn = document.getElementById('select-level-btn');
         this.levelSelectMenu = document.getElementById('level-select-menu');
         this.levelButtonsContainer = document.getElementById('level-buttons-container');
         this.cancelLevelSelectBtn = document.getElementById('cancel-level-select-btn');
-        this.currentLevelNameElement = document.getElementById('current-level-name');
         
-        // Boutons retour au menu principal
-        this.mainMenuBtn = document.getElementById('main-menu-btn');
-        this.levelMainMenuBtn = document.getElementById('level-main-menu-btn');
-        
-        // Éléments UI pour la sélection de skin
+        // Skin Select
         this.selectSkinBtn = document.getElementById('select-skin-btn');
         this.skinSelectMenu = document.getElementById('skin-select-menu');
         this.skinGrid = document.getElementById('skin-grid');
@@ -62,199 +101,392 @@ class Game {
         this.skinPreviewCanvas = document.getElementById('skin-preview-canvas');
         this.skinPreviewName = document.getElementById('skin-preview-name');
         this.cancelSkinSelectBtn = document.getElementById('cancel-skin-select-btn');
+        this.confirmSkinSelectBtn = document.getElementById('confirm-skin-select-btn');
         this.skinPreviewCtx = this.skinPreviewCanvas.getContext('2d');
-        this.skinPreviewAnimationId = null;
-        this.currentSkinCategory = 'all';
-        this.skinGridColumns = 5; // Nombre de colonnes dans la grille
         
-        // Éléments UI pour le menu pause
+        // Pause
         this.pauseMenuElement = document.getElementById('pause-menu');
         this.resumeBtn = document.getElementById('resume-btn');
         this.pauseMainMenuBtn = document.getElementById('pause-main-menu-btn');
         this.pauseMobileBtn = document.getElementById('pause-mobile-btn');
         
-        // Élément UI pour le mode Debug
+        // Debug
         this.debugIndicator = document.getElementById('debug-indicator');
-        
-        this.init();
     }
     
-    init() {
-        // Initialiser l'indicateur de debug
-        this.updateDebugIndicator();
+    _setupStateCallbacks() {
+        // Callbacks d'entrée dans les états
+        this.state.onEnter(GameStates.MAIN_MENU, () => this._enterMainMenu());
+        this.state.onEnter(GameStates.LEVEL_SELECT, () => this._enterLevelSelect());
+        this.state.onEnter(GameStates.SKIN_SELECT, () => this._enterSkinSelect());
+        this.state.onEnter(GameStates.PLAYING, () => this._enterPlaying());
+        this.state.onEnter(GameStates.PAUSED, () => this._enterPaused());
+        this.state.onEnter(GameStates.GAME_OVER, () => this._enterGameOver());
+        this.state.onEnter(GameStates.LEVEL_COMPLETE, () => this._enterLevelComplete());
         
-        // Générer les boutons de sélection de niveau
-        this.generateLevelButtons();
+        // Callbacks de sortie des états
+        this.state.onExit(GameStates.SKIN_SELECT, () => this._exitSkinSelect());
+        this.state.onExit(GameStates.PAUSED, () => this._exitPaused());
+        this.state.onExit(GameStates.PLAYING, () => this._exitPlaying());
+    }
+    
+    _setupActionHandlers() {
+        // Navigation / Confirmation
+        this.input.on(Actions.CONFIRM, () => this._handleConfirm());
+        this.input.on(Actions.CANCEL, () => this._handleCancel());
+        this.input.on(Actions.NAVIGATE_UP, () => this._handleNavigate('up'));
+        this.input.on(Actions.NAVIGATE_DOWN, () => this._handleNavigate('down'));
+        this.input.on(Actions.NAVIGATE_LEFT, () => this._handleNavigate('left'));
+        this.input.on(Actions.NAVIGATE_RIGHT, () => this._handleNavigate('right'));
         
-        // Mettre à jour l'affichage du nom du niveau
-        this.updateLevelNameDisplay();
+        // Jeu
+        this.input.on(Actions.JUMP_START, () => this._handleJumpStart());
+        this.input.on(Actions.JUMP_END, () => this._handleJumpEnd());
+        this.input.on(Actions.PAUSE, () => this._handlePause());
+        this.input.on(Actions.RESTART, () => this._handleRestart());
+        this.input.on(Actions.MAIN_MENU, () => this._handleMainMenu());
         
-        // Préparer le niveau (mais ne pas démarrer)
-        this.prepareLevel();
+        // Debug
+        this.input.on(Actions.DEBUG_TOGGLE, () => this.toggleDebugMode());
+        this.input.on(Actions.DEBUG_FORWARD, () => this._handleDebugTeleport(1));
+        this.input.on(Actions.DEBUG_BACKWARD, () => this._handleDebugTeleport(-1));
+    }
+    
+    _setupUIButtons() {
+        // Menu principal
+        this.startBtn.addEventListener('click', () => {
+            this.state.transitionTo(GameStates.PLAYING);
+        });
         
-        // Contrôles
-        this.setupControls();
+        this.selectLevelBtn.addEventListener('click', () => {
+            this.state.transitionTo(GameStates.LEVEL_SELECT);
+        });
         
-        // Bouton start
-        this.startBtn.addEventListener('click', () => this.startGame());
+        this.selectSkinBtn.addEventListener('click', () => {
+            this.state.transitionTo(GameStates.SKIN_SELECT);
+        });
         
-        // Bouton restart (game over)
-        this.restartBtn.addEventListener('click', () => this.restart());
-        // Bouton restart (fin de niveau)
-        if (this.levelRestartBtn) {
-            this.levelRestartBtn.addEventListener('click', () => this.restart());
+        // Level Select
+        this.cancelLevelSelectBtn.addEventListener('click', () => {
+            this.state.transitionTo(GameStates.MAIN_MENU);
+        });
+        
+        // Skin Select
+        this.cancelSkinSelectBtn.addEventListener('click', () => {
+            this._cancelSkinSelection();
+            this.state.transitionTo(GameStates.MAIN_MENU);
+        });
+        
+        if (this.confirmSkinSelectBtn) {
+            this.confirmSkinSelectBtn.addEventListener('click', () => {
+                this._confirmSkinSelection();
+                this.state.transitionTo(GameStates.MAIN_MENU);
+            });
         }
-        
-        // Boutons de sélection de niveau
-        this.selectLevelBtn.addEventListener('click', () => this.openLevelSelect());
-        this.cancelLevelSelectBtn.addEventListener('click', () => this.closeLevelSelect());
-        
-        // Boutons de sélection de skin
-        this.selectSkinBtn.addEventListener('click', () => this.openSkinSelect());
-        this.cancelSkinSelectBtn.addEventListener('click', () => this.closeSkinSelect());
         
         // Onglets de catégorie de skin
         this.skinCategoryTabs.forEach(tab => {
-            tab.addEventListener('click', () => this.filterSkinsByCategory(tab.dataset.category));
+            tab.addEventListener('click', () => this._filterSkinsByCategory(tab.dataset.category));
         });
         
-        // Navigation clavier dans le menu skin
-        document.addEventListener('keydown', (e) => this.handleSkinNavigation(e));
-        
-        // Boutons retour au menu principal
+        // Game Over
+        this.restartBtn.addEventListener('click', () => this._handleRestart());
         if (this.mainMenuBtn) {
-            this.mainMenuBtn.addEventListener('click', () => this.goToMainMenu());
+            this.mainMenuBtn.addEventListener('click', () => this._handleMainMenu());
+        }
+        
+        // Level Complete
+        if (this.levelRestartBtn) {
+            this.levelRestartBtn.addEventListener('click', () => this._handleRestart());
         }
         if (this.levelMainMenuBtn) {
-            this.levelMainMenuBtn.addEventListener('click', () => this.goToMainMenu());
+            this.levelMainMenuBtn.addEventListener('click', () => this._handleMainMenu());
         }
         
-        // Boutons du menu pause
+        // Pause
         if (this.resumeBtn) {
-            this.resumeBtn.addEventListener('click', () => this.togglePause());
+            this.resumeBtn.addEventListener('click', () => this._handlePause());
         }
         if (this.pauseMainMenuBtn) {
-            this.pauseMainMenuBtn.addEventListener('click', () => this.goToMainMenuFromPause());
+            this.pauseMainMenuBtn.addEventListener('click', () => this._handleMainMenu());
         }
         if (this.pauseMobileBtn) {
-            this.pauseMobileBtn.addEventListener('click', () => this.togglePause());
-        }
-        
-        // Afficher le menu et faire un premier rendu statique
-        this.engine.render();
-    }
-    
-    // ========== Gestion du mode Debug ==========
-    
-    loadDebugMode() {
-        try {
-            const saved = localStorage.getItem(DEBUG_STORAGE_KEY);
-            return saved === 'true';
-        } catch (e) {
-            return false;
+            this.pauseMobileBtn.addEventListener('click', () => this._handlePause());
         }
     }
     
-    saveDebugMode(enabled) {
-        try {
-            localStorage.setItem(DEBUG_STORAGE_KEY, enabled.toString());
-        } catch (e) {
-            console.warn('Impossible d\'enregistrer le mode debug:', e);
-        }
-    }
-    
-    toggleDebugMode() {
-        this.debugMode = !this.debugMode;
-        this.saveDebugMode(this.debugMode);
+    _init() {
         this.updateDebugIndicator();
-        console.log(`Mode Debug: ${this.debugMode ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
-    }
-    
-    updateDebugIndicator() {
-        if (this.debugIndicator) {
-            if (this.debugMode) {
-                this.debugIndicator.classList.remove('hidden');
-            } else {
-                this.debugIndicator.classList.add('hidden');
-            }
-        }
-    }
-    
-    /**
-     * Téléporte le niveau (déplace tous les obstacles) en mode Debug + Pause.
-     * @param {number} deltaMeters - Distance en mètres (>0 = avancer, <0 = reculer)
-     */
-    debugTeleport(deltaMeters) {
-        if (!this.debugMode || !this.paused) return;
-        
-        const deltaUnits = deltaMeters * CONFIG.UNITS_PER_METER;
-        
-        // Déplacer tous les obstacles
-        for (const obstacle of this.obstacles) {
-            obstacle.x -= deltaUnits;
-            
-            // Mettre à jour les obstacles portés (PlateformeAir, RectangleLarge)
-            if (obstacle.carriedObstacles) {
-                for (const carried of obstacle.carriedObstacles) {
-                    carried.x = obstacle.x + carried._relativeX;
-                }
-            }
-        }
-        
-        // Mettre à jour la distance affichée
-        this.engine.distance += deltaMeters;
-        if (this.engine.distance < 0) this.engine.distance = 0;
-        
-        // Vérifier les collisions pour l'indicateur visuel
-        this.checkDebugCollisions();
-        
-        // Mettre à jour l'affichage
-        this.scoreElement.textContent = `Distance: ${this.engine.getDistance()}m`;
+        this._generateLevelButtons();
+        this._updateLevelNameDisplay();
+        this._prepareLevel();
         this.engine.render();
     }
     
-    /**
-     * Vérifie les collisions en mode Debug et déclenche le flash visuel.
-     */
-    checkDebugCollisions() {
-        if (!this.debugMode) return;
+    // ========== Handlers d'actions ==========
+    
+    _handleConfirm() {
+        switch (this.state.current) {
+            case GameStates.MAIN_MENU:
+                this.state.transitionTo(GameStates.PLAYING);
+                break;
+            case GameStates.LEVEL_SELECT:
+                // La sélection se fait au clic sur un niveau
+                this.state.transitionTo(GameStates.MAIN_MENU);
+                break;
+            case GameStates.SKIN_SELECT:
+                this._confirmSkinSelection();
+                this.state.transitionTo(GameStates.MAIN_MENU);
+                break;
+        }
+    }
+    
+    _handleCancel() {
+        switch (this.state.current) {
+            case GameStates.LEVEL_SELECT:
+                this.state.transitionTo(GameStates.MAIN_MENU);
+                break;
+            case GameStates.SKIN_SELECT:
+                this._cancelSkinSelection();
+                this.state.transitionTo(GameStates.MAIN_MENU);
+                break;
+        }
+    }
+    
+    _handleNavigate(direction) {
+        if (this.state.is(GameStates.SKIN_SELECT)) {
+            this._navigateSkinGrid(direction);
+        }
+    }
+    
+    _handleJumpStart() {
+        if (this.state.is(GameStates.PLAYING) && this.player) {
+            this.player.startJump();
+        }
+    }
+    
+    _handleJumpEnd() {
+        if (this.player) {
+            this.player.stopJump();
+        }
+    }
+    
+    _handlePause() {
+        if (this.state.is(GameStates.PLAYING)) {
+            this.state.transitionTo(GameStates.PAUSED);
+        } else if (this.state.is(GameStates.PAUSED)) {
+            this.state.transitionTo(GameStates.PLAYING);
+        }
+    }
+    
+    _handleRestart() {
+        if (this.state.isAnyOf(GameStates.GAME_OVER, GameStates.LEVEL_COMPLETE)) {
+            this._restart();
+            this.state.forceState(GameStates.PLAYING);
+            this._enterPlaying();
+        }
+    }
+    
+    _handleMainMenu() {
+        if (this.state.isAnyOf(GameStates.PAUSED, GameStates.GAME_OVER, GameStates.LEVEL_COMPLETE)) {
+            this._resetGame();
+            this.state.forceState(GameStates.MAIN_MENU);
+            this._enterMainMenu();
+        }
+    }
+    
+    _handleDebugTeleport(direction) {
+        if (!this.debugMode || !this.state.is(GameStates.PAUSED)) return;
+        
+        const speed = this.input.isShiftPressed() 
+            ? CONFIG.DEBUG.TELEPORT_SPEED_FAST 
+            : CONFIG.DEBUG.TELEPORT_SPEED;
+        
+        this._debugTeleport(direction * speed);
+    }
+    
+    // ========== Callbacks d'entrée/sortie d'états ==========
+    
+    _enterMainMenu() {
+        // Cacher tous les autres menus
+        this._hideAllMenus();
+        
+        // Afficher le menu principal
+        this.startMenuElement.classList.remove('hidden');
+        this.scoreElement.classList.add('hidden');
+        
+        // Cacher le bouton pause mobile
+        if (this.pauseMobileBtn) {
+            this.pauseMobileBtn.classList.add('hidden');
+        }
+        
+        // Préparer le niveau pour l'aperçu
+        this._prepareLevel();
+        this.engine.render();
+    }
+    
+    _enterLevelSelect() {
+        this.startMenuElement.classList.add('hidden');
+        this.levelSelectMenu.classList.remove('hidden');
+        
+        // Mettre à jour le bouton "current"
+        const buttons = this.levelButtonsContainer.querySelectorAll('.level-select-btn');
+        buttons.forEach(btn => {
+            btn.classList.toggle('current', parseInt(btn.dataset.levelIndex) === this.selectedLevelIndex);
+        });
+    }
+    
+    _enterSkinSelect() {
+        this.startMenuElement.classList.add('hidden');
+        this.skinSelectMenu.classList.remove('hidden');
+        
+        // Sauvegarder le skin actuel au cas où on annule
+        this.pendingSkinId = skinManager.currentSkinId;
+        
+        // Générer la grille et démarrer l'animation
+        this._generateSkinGrid();
+        this._startSkinPreviewAnimation();
+    }
+    
+    _exitSkinSelect() {
+        this._stopSkinPreviewAnimation();
+        this.skinSelectMenu.classList.add('hidden');
+    }
+    
+    _enterPlaying() {
+        this._hideAllMenus();
+        this.scoreElement.classList.remove('hidden');
+        
+        // Afficher le bouton pause mobile
+        if (this.pauseMobileBtn) {
+            this.pauseMobileBtn.classList.remove('hidden');
+        }
+        
+        // Démarrer le moteur si nécessaire
+        if (!this.engine.isRunning) {
+            this.engine.start();
+        }
+        
+        // Démarrer la boucle de jeu
+        this._gameLoop();
+    }
+    
+    _exitPlaying() {
+        this.engine.stop();
+        if (this.player) {
+            this.player.stopJump();
+        }
+    }
+    
+    _enterPaused() {
+        this.engine.stop();
+        
+        // En mode Debug, pas de menu ni de flou
+        if (!this.debugMode) {
+            this.canvas.classList.add('paused');
+            if (this.pauseMenuElement) {
+                this.pauseMenuElement.classList.remove('hidden');
+            }
+            if (this.pauseMobileBtn) {
+                this.pauseMobileBtn.classList.add('hidden');
+            }
+        }
+    }
+    
+    _exitPaused() {
+        this.canvas.classList.remove('paused');
+        if (this.pauseMenuElement) {
+            this.pauseMenuElement.classList.add('hidden');
+        }
+        if (this.pauseMobileBtn) {
+            this.pauseMobileBtn.classList.remove('hidden');
+        }
+    }
+    
+    _enterGameOver() {
+        this.engine.stop();
+        if (this.player) {
+            this.player.stopJump();
+        }
+        
+        if (this.pauseMobileBtn) {
+            this.pauseMobileBtn.classList.add('hidden');
+        }
+        
+        const distance = this.engine.getDistance();
+        this.finalScoreElement.textContent = distance;
+        this.gameOverElement.classList.remove('hidden');
+    }
+    
+    _enterLevelComplete() {
+        this.engine.stop();
+        if (this.player) {
+            this.player.stopJump();
+        }
+        
+        if (this.pauseMobileBtn) {
+            this.pauseMobileBtn.classList.add('hidden');
+        }
+        
+        const distance = this.engine.getDistance();
+        if (this.levelFinalScoreElement && this.levelCompleteElement) {
+            this.levelFinalScoreElement.textContent = distance;
+            this.levelCompleteElement.classList.remove('hidden');
+        }
+    }
+    
+    _hideAllMenus() {
+        this.startMenuElement.classList.add('hidden');
+        this.levelSelectMenu.classList.add('hidden');
+        this.skinSelectMenu.classList.add('hidden');
+        this.gameOverElement.classList.add('hidden');
+        if (this.levelCompleteElement) {
+            this.levelCompleteElement.classList.add('hidden');
+        }
+        if (this.pauseMenuElement) {
+            this.pauseMenuElement.classList.add('hidden');
+        }
+        this.canvas.classList.remove('paused');
+    }
+    
+    // ========== Gestion du niveau ==========
+    
+    _prepareLevel() {
+        this.engine.entities = [];
+        this.engine.distance = 0;
+        
+        // Créer le joueur
+        this.player = new Player();
+        this.engine.addEntity(this.player);
+        
+        // Charger le niveau
+        this.levelManager.loadLevel(this.selectedLevelIndex);
+        this.obstacles = this.levelManager.createObstaclesForLevel();
         
         for (const obstacle of this.obstacles) {
-            if (obstacle.checkCollision && obstacle.checkCollision(this.player)) {
-                // Déclencher le flash de collision
-                this.player.collisionFlashTimer = CONFIG.DEBUG.COLLISION_FLASH_DURATION;
-                return;
-            }
+            this.engine.addEntity(obstacle);
+        }
+        
+        console.log(`Niveau chargé: ${this.levelManager.getLevelName()}`);
+    }
+    
+    _restart() {
+        this._hideAllMenus();
+        this._prepareLevel();
+        this.scoreElement.classList.remove('hidden');
+        
+        if (this.pauseMobileBtn) {
+            this.pauseMobileBtn.classList.remove('hidden');
         }
     }
     
-    // ========== Gestion de la sélection de niveau ==========
-    
-    loadSelectedLevel() {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved !== null) {
-                const index = parseInt(saved, 10);
-                // Vérifier que l'index est valide
-                if (!isNaN(index) && index >= 0) {
-                    return index;
-                }
-            }
-        } catch (e) {
-            console.warn('Impossible de lire localStorage:', e);
-        }
-        return 0;
+    _resetGame() {
+        this.engine.stop();
+        this.engine.entities = [];
+        this.engine.distance = 0;
     }
     
-    saveSelectedLevel(index) {
-        try {
-            localStorage.setItem(STORAGE_KEY, index.toString());
-        } catch (e) {
-            console.warn('Impossible d\'écrire dans localStorage:', e);
-        }
-    }
-    
-    generateLevelButtons() {
+    _generateLevelButtons() {
         const levels = this.levelManager.getLevelsList();
         this.levelButtonsContainer.innerHTML = '';
         
@@ -268,101 +500,36 @@ class Game {
                 btn.classList.add('current');
             }
             
-            btn.addEventListener('click', () => this.selectLevel(level.index));
+            btn.addEventListener('click', () => this._selectLevel(level.index));
             this.levelButtonsContainer.appendChild(btn);
         }
     }
     
-    updateLevelNameDisplay() {
-        // Charger temporairement le niveau pour obtenir son nom
-        this.levelManager.loadLevel(this.selectedLevelIndex);
-        const levelName = this.levelManager.getLevelName();
-        this.currentLevelNameElement.textContent = levelName;
-    }
-    
-    openLevelSelect() {
-        this.levelSelectOpen = true;
-        this.startMenuElement.classList.add('hidden');
-        this.levelSelectMenu.classList.remove('hidden');
-        
-        // Mettre à jour le bouton "current"
-        const buttons = this.levelButtonsContainer.querySelectorAll('.level-select-btn');
-        buttons.forEach(btn => {
-            btn.classList.toggle('current', parseInt(btn.dataset.levelIndex) === this.selectedLevelIndex);
-        });
-    }
-    
-    closeLevelSelect() {
-        this.levelSelectOpen = false;
-        this.levelSelectMenu.classList.add('hidden');
-        this.startMenuElement.classList.remove('hidden');
-    }
-    
-    selectLevel(index) {
+    _selectLevel(index) {
         this.selectedLevelIndex = index;
-        this.saveSelectedLevel(index);
-        this.updateLevelNameDisplay();
+        this._saveSelectedLevel(index);
+        this._updateLevelNameDisplay();
         
-        // Recharger le niveau dans le moteur
-        this.engine.entities = [];
-        this.engine.distance = 0;
-        this.prepareLevel();
+        // Recharger le niveau
+        this._prepareLevel();
         this.engine.render();
         
-        this.closeLevelSelect();
+        this.state.transitionTo(GameStates.MAIN_MENU);
     }
     
-    // ========== Gestion de la sélection de skin ==========
-    
-    loadSelectedSkin() {
-        try {
-            const saved = localStorage.getItem(SKIN_STORAGE_KEY);
-            if (saved && skinManager.get(saved)) {
-                skinManager.setCurrentSkin(saved);
-            }
-        } catch (e) {
-            console.warn('Impossible de lire le skin depuis localStorage:', e);
-        }
+    _updateLevelNameDisplay() {
+        this.levelManager.loadLevel(this.selectedLevelIndex);
+        this.currentLevelNameElement.textContent = this.levelManager.getLevelName();
     }
     
-    saveSelectedSkin(skinId) {
-        try {
-            localStorage.setItem(SKIN_STORAGE_KEY, skinId);
-        } catch (e) {
-            console.warn('Impossible d\'enregistrer le skin:', e);
-        }
-    }
+    // ========== Gestion des skins ==========
     
-    openSkinSelect() {
-        this.skinSelectOpen = true;
-        this.startMenuElement.classList.add('hidden');
-        this.skinSelectMenu.classList.remove('hidden');
-        
-        // Générer la grille de skins
-        this.generateSkinGrid();
-        
-        // Démarrer l'animation de prévisualisation
-        this.startSkinPreviewAnimation();
-    }
-    
-    closeSkinSelect() {
-        this.skinSelectOpen = false;
-        this.skinSelectMenu.classList.add('hidden');
-        this.startMenuElement.classList.remove('hidden');
-        
-        // Arrêter l'animation de prévisualisation
-        this.stopSkinPreviewAnimation();
-        
-        // Mettre à jour le rendu du joueur avec le nouveau skin
-        this.engine.render();
-    }
-    
-    generateSkinGrid() {
+    _generateSkinGrid() {
         this.skinGrid.innerHTML = '';
         
         const skins = Array.from(skinManager.skins.values());
-        const filteredSkins = this.currentSkinCategory === 'all' 
-            ? skins 
+        const filteredSkins = this.currentSkinCategory === 'all'
+            ? skins
             : skins.filter(skin => skin.type === this.currentSkinCategory);
         
         for (const skin of filteredSkins) {
@@ -378,40 +545,119 @@ class Game {
                 item.classList.add('selected');
             }
             
-            // Créer un mini canvas pour l'aperçu
             const canvas = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
             item.appendChild(canvas);
             
-            // Dessiner le skin sur le mini canvas
-            this.drawSkinPreviewOnCanvas(skin, canvas);
-            
-            // Événement de sélection
-            item.addEventListener('click', () => this.selectSkin(skin.id));
+            this._drawSkinPreviewOnCanvas(skin, canvas);
+            item.addEventListener('click', () => this._selectSkinInGrid(skin.id));
             
             this.skinGrid.appendChild(item);
         }
     }
     
-    drawSkinPreviewOnCanvas(skin, canvas) {
+    _selectSkinInGrid(skinId) {
+        skinManager.setCurrentSkin(skinId);
+        
+        // Mettre à jour la sélection visuelle
+        const items = this.skinGrid.querySelectorAll('.skin-item');
+        items.forEach(item => {
+            item.classList.toggle('selected', item.dataset.skinId === skinId);
+        });
+        
+        // Mettre à jour le nom
+        const skin = skinManager.getCurrentSkin();
+        this.skinPreviewName.textContent = skin.name;
+    }
+    
+    _confirmSkinSelection() {
+        // Sauvegarder le skin sélectionné
+        this._saveSelectedSkin(skinManager.currentSkinId);
+        this.pendingSkinId = null;
+    }
+    
+    _cancelSkinSelection() {
+        // Restaurer le skin précédent
+        if (this.pendingSkinId) {
+            skinManager.setCurrentSkin(this.pendingSkinId);
+        }
+        this.pendingSkinId = null;
+    }
+    
+    _navigateSkinGrid(direction) {
+        const items = Array.from(this.skinGrid.querySelectorAll('.skin-item'));
+        if (items.length === 0) return;
+        
+        const currentIndex = items.findIndex(item => item.dataset.skinId === skinManager.currentSkinId);
+        const cols = this.skinGridColumns;
+        const rows = Math.ceil(items.length / cols);
+        
+        let row = Math.floor(currentIndex / cols);
+        let col = currentIndex % cols;
+        
+        // Comportement tore
+        switch (direction) {
+            case 'up':
+                row = (row - 1 + rows) % rows;
+                break;
+            case 'down':
+                row = (row + 1) % rows;
+                break;
+            case 'left':
+                col = (col - 1 + cols) % cols;
+                break;
+            case 'right':
+                col = (col + 1) % cols;
+                break;
+        }
+        
+        let newIndex = row * cols + col;
+        
+        // Gérer la dernière ligne incomplète
+        if (newIndex >= items.length) {
+            if (direction === 'down') {
+                newIndex = col;
+            } else if (direction === 'right') {
+                newIndex = ((row + 1) % rows) * cols;
+                if (newIndex >= items.length) newIndex = 0;
+            } else if (direction === 'up') {
+                const lastRowForCol = Math.floor((items.length - 1) / cols);
+                const lastIndexInCol = lastRowForCol * cols + col;
+                newIndex = lastIndexInCol < items.length ? lastIndexInCol : items.length - 1;
+            }
+        }
+        
+        if (newIndex >= 0 && newIndex < items.length) {
+            const newSkinId = items[newIndex].dataset.skinId;
+            this._selectSkinInGrid(newSkinId);
+            items[newIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+    
+    _filterSkinsByCategory(category) {
+        this.currentSkinCategory = category;
+        
+        this.skinCategoryTabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.category === category);
+        });
+        
+        this._generateSkinGrid();
+    }
+    
+    _drawSkinPreviewOnCanvas(skin, canvas) {
         const ctx = canvas.getContext('2d');
         const size = canvas.width;
         
-        // Effacer
         ctx.clearRect(0, 0, size, size);
         
-        // Dessiner le skin (en pixels directs, pas en unités logiques)
         if (skin.type === 'static' || skin.type === 'image') {
-            // Pour les skins statiques, dessiner directement
-            this.drawSkinDirectly(ctx, skin, 0, 0, size, size);
+            this._drawSkinDirectly(ctx, skin, 0, 0, size, size);
         } else if (skin.type === 'dynamic') {
-            // Pour les skins dynamiques, dessiner la première frame
             const frameFn = skin.frames[0];
             if (typeof frameFn === 'function') {
                 frameFn(ctx, 0, 0, size, size, {}, skin.state);
             }
-            // Bordure
             if (skin.borderColor) {
                 ctx.strokeStyle = skin.borderColor;
                 ctx.lineWidth = 2;
@@ -420,8 +666,7 @@ class Game {
         }
     }
     
-    drawSkinDirectly(ctx, skin, x, y, w, h) {
-        // Dessiner un skin sans passer par Scale (pour les previews)
+    _drawSkinDirectly(ctx, skin, x, y, w, h) {
         if (skin.color) {
             ctx.fillStyle = skin.color;
             ctx.fillRect(x, y, w, h);
@@ -438,48 +683,21 @@ class Game {
         }
     }
     
-    selectSkin(skinId) {
-        skinManager.setCurrentSkin(skinId);
-        this.saveSelectedSkin(skinId);
-        
-        // Mettre à jour la sélection visuelle
-        const items = this.skinGrid.querySelectorAll('.skin-item');
-        items.forEach(item => {
-            item.classList.toggle('selected', item.dataset.skinId === skinId);
-        });
-        
-        // Mettre à jour le nom dans la prévisualisation
-        const skin = skinManager.getCurrentSkin();
-        this.skinPreviewName.textContent = skin.name;
-    }
-    
-    filterSkinsByCategory(category) {
-        this.currentSkinCategory = category;
-        
-        // Mettre à jour les onglets
-        this.skinCategoryTabs.forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.category === category);
-        });
-        
-        // Regénérer la grille
-        this.generateSkinGrid();
-    }
-    
-    startSkinPreviewAnimation() {
+    _startSkinPreviewAnimation() {
         const skin = skinManager.getCurrentSkin();
         this.skinPreviewName.textContent = skin.name;
         
         const animate = () => {
-            const dt = 1/60;
+            const dt = 1 / 60;
             
-            // Mettre à jour TOUS les skins dynamiques (pour les miniatures)
+            // Mettre à jour tous les skins dynamiques
             for (const skin of skinManager.skins.values()) {
                 if (skin.type === 'dynamic') {
                     skin.update(dt);
                 }
             }
             
-            // Dessiner sur le canvas de prévisualisation
+            // Dessiner la prévisualisation principale
             const ctx = this.skinPreviewCtx;
             const size = this.skinPreviewCanvas.width;
             
@@ -497,10 +715,10 @@ class Game {
                     ctx.strokeRect(0, 0, size, size);
                 }
             } else {
-                this.drawSkinDirectly(ctx, currentSkin, 0, 0, size, size);
+                this._drawSkinDirectly(ctx, currentSkin, 0, 0, size, size);
             }
             
-            // Mettre à jour aussi les miniatures des skins dynamiques
+            // Mettre à jour les miniatures animées
             const animatedItems = this.skinGrid.querySelectorAll('.skin-item.animated');
             animatedItems.forEach(item => {
                 const skinId = item.dataset.skinId;
@@ -529,315 +747,19 @@ class Game {
         animate();
     }
     
-    stopSkinPreviewAnimation() {
+    _stopSkinPreviewAnimation() {
         if (this.skinPreviewAnimationId) {
             cancelAnimationFrame(this.skinPreviewAnimationId);
             this.skinPreviewAnimationId = null;
         }
     }
     
-    handleSkinNavigation(e) {
-        if (!this.skinSelectOpen) return;
-        
-        const arrows = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-        if (!arrows.includes(e.code) && e.code !== 'Enter' && e.code !== 'Space') return;
-        
-        e.preventDefault();
-        
-        // Entrée ou Espace = confirmer et fermer
-        if (e.code === 'Enter' || e.code === 'Space') {
-            this.closeSkinSelect();
-            return;
-        }
-        
-        const items = Array.from(this.skinGrid.querySelectorAll('.skin-item'));
-        if (items.length === 0) return;
-        
-        // Trouver l'index actuel
-        const currentIndex = items.findIndex(item => item.dataset.skinId === skinManager.currentSkinId);
-        const cols = this.skinGridColumns;
-        const rows = Math.ceil(items.length / cols);
-        
-        // Position actuelle dans la grille
-        let row = Math.floor(currentIndex / cols);
-        let col = currentIndex % cols;
-        
-        // Calculer la nouvelle position (comportement tore)
-        switch (e.code) {
-            case 'ArrowUp':
-                row = (row - 1 + rows) % rows;
-                break;
-            case 'ArrowDown':
-                row = (row + 1) % rows;
-                break;
-            case 'ArrowLeft':
-                col = (col - 1 + cols) % cols;
-                break;
-            case 'ArrowRight':
-                col = (col + 1) % cols;
-                break;
-        }
-        
-        // Calculer le nouvel index
-        let newIndex = row * cols + col;
-        
-        // Gérer le cas où on dépasse le nombre d'items (dernière ligne incomplète)
-        if (newIndex >= items.length) {
-            if (e.code === 'ArrowDown') {
-                // Si on descend et qu'on dépasse, revenir en haut de la même colonne
-                newIndex = col;
-            } else if (e.code === 'ArrowRight') {
-                // Si on va à droite et qu'on dépasse, aller au premier de la ligne suivante
-                newIndex = ((row + 1) % rows) * cols;
-                if (newIndex >= items.length) newIndex = 0;
-            } else if (e.code === 'ArrowUp') {
-                // Si on monte depuis la première ligne vers une colonne qui n'existe pas en bas
-                // Trouver le dernier élément de cette colonne
-                const lastRowForCol = Math.floor((items.length - 1) / cols);
-                const lastIndexInCol = lastRowForCol * cols + col;
-                newIndex = lastIndexInCol < items.length ? lastIndexInCol : items.length - 1;
-            }
-        }
-        
-        // Sélectionner le nouveau skin
-        if (newIndex >= 0 && newIndex < items.length) {
-            const newSkinId = items[newIndex].dataset.skinId;
-            this.selectSkin(newSkinId);
-            
-            // Scroll pour rendre visible si nécessaire
-            items[newIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
+    // ========== Boucle de jeu ==========
     
-    goToMainMenu() {
-        // Réinitialiser l'état du jeu
-        this.gameOver = false;
-        this.paused = false;
-        this.started = false;
-        this.engine.stop();
-        this.engine.entities = [];
-        this.engine.distance = 0;
+    _gameLoop = () => {
+        if (!this.state.is(GameStates.PLAYING)) return;
         
-        // Cacher les écrans de fin
-        this.gameOverElement.classList.add('hidden');
-        if (this.levelCompleteElement) {
-            this.levelCompleteElement.classList.add('hidden');
-        }
-        this.scoreElement.classList.add('hidden');
-        
-        // Cacher le bouton pause mobile
-        if (this.pauseMobileBtn) {
-            this.pauseMobileBtn.classList.add('hidden');
-        }
-        
-        // Préparer le niveau et afficher le menu principal
-        this.prepareLevel();
-        this.engine.render();
-        this.startMenuElement.classList.remove('hidden');
-    }
-    
-    prepareLevel() {
-        // Créer le joueur
-        this.player = new Player();
-        this.engine.addEntity(this.player);
-        
-        // Charger le niveau sélectionné
-        this.levelManager.loadLevel(this.selectedLevelIndex);
-        this.obstacles = this.levelManager.createObstaclesForLevel();
-        
-        // Ajouter tous les obstacles au moteur
-        for (const obstacle of this.obstacles) {
-            this.engine.addEntity(obstacle);
-        }
-        
-        console.log(`Niveau chargé: ${this.levelManager.getLevelName()}`);
-        console.log(`Nombre d'obstacles: ${this.levelManager.getTotalObstacles()}`);
-    }
-    
-    startGame() {
-        this.started = true;
-        this.startMenuElement.classList.add('hidden');
-        this.scoreElement.classList.remove('hidden');
-        
-        // Afficher le bouton pause mobile (sera visible uniquement sur mobile via CSS)
-        if (this.pauseMobileBtn) {
-            this.pauseMobileBtn.classList.remove('hidden');
-        }
-        
-        // Démarrer le jeu
-        this.engine.start();
-        this.gameLoop();
-    }
-    
-    setupControls() {
-        // Clavier - Saut
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                // Démarrer le jeu si pas encore commencé
-                if (!this.started) {
-                    this.startGame();
-                    return;
-                }
-                if (!this.gameOver && !this.paused) {
-                    this.player.startJump();
-                }
-            }
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                this.player.stopJump();
-            }
-        });
-        
-        // Pause avec P ou B
-        document.addEventListener('keydown', (e) => {
-            if ((e.code === 'KeyP' || e.code === 'KeyB') && this.started && !this.gameOver) {
-                e.preventDefault();
-                this.togglePause();
-            }
-        });
-        
-        // Échap pour fermer les menus
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Escape') {
-                e.preventDefault();
-                if (this.levelSelectOpen) {
-                    this.closeLevelSelect();
-                } else if (this.skinSelectOpen) {
-                    this.closeSkinSelect();
-                }
-            }
-        });
-        
-        // Entrée : démarrer ou restart
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Enter' || e.code === 'KeyN') {
-                e.preventDefault();
-                if (!this.started) {
-                    this.startGame();
-                } else if (this.gameOver) {
-                    this.restart();
-                }
-            }
-        });
-        
-        // M : retour au menu principal (en game over ou en pause)
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyM' && (this.gameOver || this.paused)) {
-                e.preventDefault();
-                if (this.paused) {
-                    this.goToMainMenuFromPause();
-                } else {
-                    this.goToMainMenu();
-                }
-            }
-        });
-        
-        // D : Toggle mode Debug
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyD') {
-                e.preventDefault();
-                this.toggleDebugMode();
-            }
-        });
-        
-        // Flèches : Téléportation en mode Debug + Pause
-        document.addEventListener('keydown', (e) => {
-            if (!this.debugMode || !this.paused) return;
-            
-            const speed = e.shiftKey ? CONFIG.DEBUG.TELEPORT_SPEED_FAST : CONFIG.DEBUG.TELEPORT_SPEED;
-            
-            if (e.code === 'ArrowRight') {
-                e.preventDefault();
-                this.debugTeleport(speed);
-            } else if (e.code === 'ArrowLeft') {
-                e.preventDefault();
-                this.debugTeleport(-speed);
-            }
-        });
-        
-        // Souris/tactile (seulement pour sauter une fois le jeu démarré)
-        this.canvas.addEventListener('mousedown', () => {
-            if (this.started && !this.gameOver && !this.paused) {
-                this.player.startJump();
-            }
-        });
-        
-        this.canvas.addEventListener('mouseup', () => {
-            this.player.stopJump();
-        });
-        
-        this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (this.started && !this.gameOver && !this.paused) {
-                this.player.startJump();
-            }
-        });
-        
-        this.canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.player.stopJump();
-        });
-    }
-    
-    
-    togglePause() {
-        this.paused = !this.paused;
-        if (this.paused) {
-            this.engine.stop();
-            this.showPauseMenu();
-        } else {
-            this.hidePauseMenu();
-            this.engine.start();
-            this.gameLoop();
-        }
-    }
-    
-    showPauseMenu() {
-        // En mode Debug, pas de menu ni de flou pour voir le niveau
-        if (this.debugMode) {
-            return;
-        }
-        
-        // Ajouter l'effet de flou sur le canvas
-        this.canvas.classList.add('paused');
-        // Afficher le menu pause
-        if (this.pauseMenuElement) {
-            this.pauseMenuElement.classList.remove('hidden');
-        }
-        // Cacher le bouton pause mobile
-        if (this.pauseMobileBtn) {
-            this.pauseMobileBtn.classList.add('hidden');
-        }
-    }
-    
-    hidePauseMenu() {
-        // Retirer l'effet de flou
-        this.canvas.classList.remove('paused');
-        // Cacher le menu pause
-        if (this.pauseMenuElement) {
-            this.pauseMenuElement.classList.add('hidden');
-        }
-        // Réafficher le bouton pause mobile si le jeu est en cours
-        if (this.pauseMobileBtn && this.started && !this.gameOver) {
-            this.pauseMobileBtn.classList.remove('hidden');
-        }
-    }
-    
-    goToMainMenuFromPause() {
-        // D'abord cacher le menu pause et retirer le flou
-        this.hidePauseMenu();
-        // Puis aller au menu principal
-        this.goToMainMenu();
-    }
-    
-    gameLoop = () => {
-        if (this.gameOver || this.paused) return;
-        
-        // Nettoyer les obstacles hors écran (sauf en mode Debug pour pouvoir revenir en arrière)
+        // Nettoyer les obstacles hors écran (sauf en mode Debug)
         if (!this.debugMode) {
             this.obstacles = this.obstacles.filter(obstacle => {
                 if (obstacle.isOffScreen()) {
@@ -848,35 +770,32 @@ class Game {
             });
         }
         
-        // Résoudre les collisions physiques (empêcher traversée)
+        // Résoudre les collisions physiques
         for (const obstacle of this.obstacles) {
             obstacle.resolveCollision(this.player);
         }
         
-        // Calculer la distance une seule fois pour cette frame
         const distance = this.engine.getDistance();
         
-        // Vérifier les collisions mortelles (corps meurtrier vs corps meurtrier)
+        // Vérifier les collisions mortelles
         for (const obstacle of this.obstacles) {
             if (obstacle.checkCollision(this.player)) {
                 if (this.debugMode) {
-                    // En mode debug : juste le flash visuel, pas de mort
                     this.player.collisionFlashTimer = CONFIG.DEBUG.COLLISION_FLASH_DURATION;
                 } else {
-                    // Mode normal : game over
                     this.scoreElement.textContent = `Distance: ${distance}m`;
-                    this.endGame(distance);
+                    this.state.transitionTo(GameStates.GAME_OVER);
                     return;
                 }
             }
         }
-
-        // Vérifier le franchissement de la ligne d'arrivée (Finish)
+        
+        // Vérifier la ligne d'arrivée
         for (const obstacle of this.obstacles) {
             if (obstacle.type === 'finish' && typeof obstacle.hasPlayerPassed === 'function') {
                 if (obstacle.hasPlayerPassed(this.player)) {
                     this.scoreElement.textContent = `Distance: ${distance}m`;
-                    this.finishLevel(distance);
+                    this.state.transitionTo(GameStates.LEVEL_COMPLETE);
                     return;
                 }
             }
@@ -885,79 +804,113 @@ class Game {
         // Mettre à jour le score
         this.scoreElement.textContent = `Distance: ${distance}m`;
         
-        // Continuer la boucle
-        requestAnimationFrame(this.gameLoop);
+        requestAnimationFrame(this._gameLoop);
     }
     
-    endGame(finalDistance) {
-        this.gameOver = true;
-        this.engine.stop();
-        this.player.stopJump();
-        
-        // Cacher le bouton pause mobile
-        if (this.pauseMobileBtn) {
-            this.pauseMobileBtn.classList.add('hidden');
-        }
-        
-        // Afficher l'écran de game over avec la même distance que celle affichée à l'écran
-        const distanceToShow = typeof finalDistance === 'number' ? finalDistance : this.engine.getDistance();
-        this.finalScoreElement.textContent = distanceToShow;
-        this.gameOverElement.classList.remove('hidden');
+    // ========== Debug ==========
+    
+    toggleDebugMode() {
+        this.debugMode = !this.debugMode;
+        this._saveDebugMode(this.debugMode);
+        this.updateDebugIndicator();
+        console.log(`Mode Debug: ${this.debugMode ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
     }
     
-    finishLevel(finalDistance) {
-        this.gameOver = true;
-        this.engine.stop();
-        this.player.stopJump();
-        
-        // Cacher le bouton pause mobile
-        if (this.pauseMobileBtn) {
-            this.pauseMobileBtn.classList.add('hidden');
-        }
-        
-        const distanceToShow = typeof finalDistance === 'number' ? finalDistance : this.engine.getDistance();
-        if (this.levelFinalScoreElement && this.levelCompleteElement) {
-            this.levelFinalScoreElement.textContent = distanceToShow;
-            this.levelCompleteElement.classList.remove('hidden');
+    updateDebugIndicator() {
+        if (this.debugIndicator) {
+            this.debugIndicator.classList.toggle('hidden', !this.debugMode);
         }
     }
     
-    restart() {
-        // Réinitialiser l'état
-        this.gameOver = false;
-        this.paused = false;
-        this.engine.entities = [];
-        this.engine.distance = 0;
+    _debugTeleport(deltaMeters) {
+        const deltaUnits = deltaMeters * CONFIG.UNITS_PER_METER;
         
-        // Recréer le joueur
-        this.player = new Player();
-        this.engine.addEntity(this.player);
-        
-        // Recharger le niveau sélectionné
-        this.levelManager.loadLevel(this.selectedLevelIndex);
-        this.obstacles = this.levelManager.createObstaclesForLevel();
-        
-        // Ajouter tous les obstacles au moteur
         for (const obstacle of this.obstacles) {
-            this.engine.addEntity(obstacle);
+            obstacle.x -= deltaUnits;
+            
+            if (obstacle.carriedObstacles) {
+                for (const carried of obstacle.carriedObstacles) {
+                    carried.x = obstacle.x + carried._relativeX;
+                }
+            }
         }
         
-        // Cacher les écrans de fin
-        this.gameOverElement.classList.add('hidden');
-        if (this.levelCompleteElement) {
-            this.levelCompleteElement.classList.add('hidden');
+        this.engine.distance += deltaMeters;
+        if (this.engine.distance < 0) this.engine.distance = 0;
+        
+        // Vérifier les collisions pour le flash visuel
+        for (const obstacle of this.obstacles) {
+            if (obstacle.checkCollision && obstacle.checkCollision(this.player)) {
+                this.player.collisionFlashTimer = CONFIG.DEBUG.COLLISION_FLASH_DURATION;
+                break;
+            }
         }
         
-        // Réafficher le bouton pause mobile
-        if (this.pauseMobileBtn) {
-            this.pauseMobileBtn.classList.remove('hidden');
+        this.scoreElement.textContent = `Distance: ${this.engine.getDistance()}m`;
+        this.engine.render();
+    }
+    
+    // ========== LocalStorage ==========
+    
+    loadSelectedLevel() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved !== null) {
+                const index = parseInt(saved, 10);
+                if (!isNaN(index) && index >= 0) {
+                    return index;
+                }
+            }
+        } catch (e) {
+            console.warn('Impossible de lire localStorage:', e);
         }
-        
-        // Redémarrer le jeu
-        this.engine.start();
-        this.gameLoop();
+        return 0;
+    }
+    
+    _saveSelectedLevel(index) {
+        try {
+            localStorage.setItem(STORAGE_KEY, index.toString());
+        } catch (e) {
+            console.warn('Impossible d\'écrire dans localStorage:', e);
+        }
+    }
+    
+    loadSelectedSkin() {
+        try {
+            const saved = localStorage.getItem(SKIN_STORAGE_KEY);
+            if (saved && skinManager.get(saved)) {
+                skinManager.setCurrentSkin(saved);
+            }
+        } catch (e) {
+            console.warn('Impossible de lire le skin depuis localStorage:', e);
+        }
+    }
+    
+    _saveSelectedSkin(skinId) {
+        try {
+            localStorage.setItem(SKIN_STORAGE_KEY, skinId);
+        } catch (e) {
+            console.warn('Impossible d\'enregistrer le skin:', e);
+        }
+    }
+    
+    loadDebugMode() {
+        try {
+            const saved = localStorage.getItem(DEBUG_STORAGE_KEY);
+            return saved === 'true';
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    _saveDebugMode(enabled) {
+        try {
+            localStorage.setItem(DEBUG_STORAGE_KEY, enabled.toString());
+        } catch (e) {
+            console.warn('Impossible d\'enregistrer le mode debug:', e);
+        }
     }
 }
 
-// Démarrer le jeu (le DOM est déjà prêt grâce au chargement dynamique)
+// Démarrer le jeu
 new Game();
