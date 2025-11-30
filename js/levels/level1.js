@@ -44,7 +44,6 @@ export const level1 = {
         { 
             type: 'rectangleLarge', x: 155, width: 20, height: 1,
             carried: [
-                { type: 'triangle', relativeX: 3, width: 0.8, height: 0.8 },
                 { type: 'triangle', relativeX: 8, width: 0.8, height: 0.8 },
                 { type: 'triangle', relativeX: 13, width: 0.8, height: 0.8 }
             ]

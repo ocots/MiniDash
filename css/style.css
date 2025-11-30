@@ -155,6 +155,27 @@ body {
     background: #45b7aa;
 }
 
+#main-menu-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.5vmin;
+    background: #666;
+    color: #fff;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#main-menu-btn:hover {
+    background: #888;
+}
+
+#game-over .controls-hint {
+    margin-top: 2vmin;
+    font-size: 2vmin;
+    color: #888;
+}
+
 /* Écran de fin de niveau (victoire) */
 #level-complete {
     position: absolute;
@@ -197,4 +218,132 @@ body {
 
 #level-restart-btn:hover {
     background: #00cc6a;
+}
+
+#level-main-menu-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.5vmin;
+    background: #666;
+    color: #fff;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#level-main-menu-btn:hover {
+    background: #888;
+}
+
+#level-complete .controls-hint {
+    margin-top: 2vmin;
+    font-size: 2vmin;
+    color: #888;
+}
+
+/* Menu de sélection de niveau */
+.menu-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5vmin;
+}
+
+#select-level-btn {
+    padding: 2vmin 2.5vmin;
+    font-size: 4vmin;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 1vmin;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0.5vmin 1.5vmin rgba(102, 126, 234, 0.4);
+}
+
+#select-level-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0.8vmin 2vmin rgba(102, 126, 234, 0.6);
+}
+
+.level-name {
+    margin-top: 2vmin;
+    font-size: 2.5vmin;
+    color: #aaa;
+    font-style: italic;
+}
+
+#level-select-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 4vmin;
+    border-radius: 1.5vmin;
+    text-align: center;
+    color: #fff;
+    pointer-events: all;
+    min-width: 40vmin;
+}
+
+#level-select-menu.hidden {
+    display: none;
+}
+
+#level-select-menu h2 {
+    font-size: 5vmin;
+    margin-bottom: 3vmin;
+    color: #4ecdc4;
+}
+
+#level-buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vmin;
+    margin-bottom: 3vmin;
+    max-height: 40vh;
+    overflow: hidden;
+}
+
+.level-select-btn {
+    padding: 1.5vmin 3vmin;
+    font-size: 2.5vmin;
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+    color: #fff;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+    text-align: left;
+}
+
+.level-select-btn:hover {
+    transform: scale(1.02);
+    background: linear-gradient(135deg, #5de0d7 0%, #52b89e 100%);
+}
+
+.level-select-btn.current {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+#cancel-level-select-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.5vmin;
+    background: #666;
+    color: #fff;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#cancel-level-select-btn:hover {
+    background: #888;
+}
+
+#level-select-menu .controls-hint {
+    margin-top: 2vmin;
+    font-size: 2vmin;
+    color: #888;
 }

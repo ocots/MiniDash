@@ -2,18 +2,37 @@ import { CONFIG } from '../config.js';
 import { Triangle } from '../entities/Triangle.js';
 import { Rectangle } from '../entities/Rectangle.js';
 import { RectangleLarge } from '../entities/RectangleLarge.js';
+import { PlateformeAir } from '../entities/PlateformeAir.js';
 import { Finish } from '../entities/Finish.js';
 import { level1 } from './level1.js';
+import { level2 } from './level2.js';
 
 // Conversion mètres -> unités logiques
 const metersToUnits = (meters) => meters * CONFIG.UNITS_PER_METER;
 
 export class LevelManager {
     constructor() {
-        this.levels = [level1];
+        this.levels = [level1, level2];
         this.currentLevelIndex = 0;
         this.currentLevel = null;
         this.obstaclesSpawned = [];
+    }
+    
+    /**
+     * Retourne la liste des niveaux disponibles avec leur nom.
+     */
+    getLevelsList() {
+        return this.levels.map((level, index) => ({
+            index,
+            name: level.name
+        }));
+    }
+    
+    /**
+     * Retourne le nombre total de niveaux.
+     */
+    getLevelsCount() {
+        return this.levels.length;
     }
     
     loadLevel(levelIndex = 0) {
@@ -79,6 +98,20 @@ export class LevelManager {
                 height: metersToUnits(c.height)
             }));
             return new RectangleLarge(xUnits, widthUnits, heightUnits, carriedObstacles);
+        } else if (type === 'plateformeAir') {
+            // Plateforme flottante dans les airs
+            // yUnits est la hauteur depuis le SOL (en mètres), on la convertit en position Y depuis le haut
+            const yFromGround = metersToUnits(entityData.y || 0);
+            const yUnits = CONFIG.WORLD_HEIGHT - CONFIG.GROUND_HEIGHT - yFromGround - heightUnits;
+            
+            // Les obstacles portés sont définis dans entityData.carried
+            const carriedObstacles = (entityData.carried || []).map(c => ({
+                type: c.type,
+                relativeX: metersToUnits(c.relativeX),
+                width: metersToUnits(c.width),
+                height: metersToUnits(c.height)
+            }));
+            return new PlateformeAir(xUnits, yUnits, widthUnits, heightUnits, carriedObstacles);
         } else if (type === 'finish') {
             // Large ligne verticale de fin de niveau
             return new Finish(xUnits, widthUnits || 0.5);

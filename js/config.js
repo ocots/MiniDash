@@ -69,6 +69,7 @@ export const CONFIG = {
     TRIANGLE_COLOR: '#ff6b6b',
     RECTANGLE_COLOR: '#ffa500',
     RECTANGLE_LARGE_COLOR: '#e67e22',
+    PLATEFORME_AIR_COLOR: '#5d6d7e',
     
     // Marges hitbox (en unités)
     RECTANGLE_HURT_MARGIN_X: 0.1,

@@ -13,23 +13,49 @@
             <div id="start-menu">
                 <h1>MiniDash</h1>
                 <p class="subtitle">Évite les obstacles, atteins l'arrivée !</p>
-                <button id="start-btn">▶ Jouer</button>
+                <div class="menu-buttons">
+                    <button id="start-btn">▶ Jouer</button>
+                    <button id="select-level-btn">📋</button>
+                </div>
+                <p id="current-level-name" class="level-name">Niveau 1</p>
                 <div class="controls-hint">
                     <span>Espace / Clic = Sauter</span>
                     <span>P / B = Pause</span>
                     <span>Entrée / N = Recommencer</span>
                 </div>
             </div>
+            <div id="level-select-menu" class="hidden">
+                <h2>Choisir un niveau</h2>
+                <div id="level-buttons-container"></div>
+                <button id="cancel-level-select-btn">Annuler</button>
+                <div class="controls-hint">
+                    <span>Échap = Annuler</span>
+                </div>
+            </div>
             <div id="score" class="hidden">Distance: 0m</div>
             <div id="game-over" class="hidden">
                 <h2>Game Over!</h2>
                 <p>Distance: <span id="final-score">0</span>m</p>
-                <button id="restart-btn">Recommencer</button>
+                <div class="menu-buttons">
+                    <button id="restart-btn">Recommencer</button>
+                    <button id="main-menu-btn">Menu Principal</button>
+                </div>
+                <div class="controls-hint">
+                    <span>Entrée / N = Recommencer</span>
+                    <span>M = Menu Principal</span>
+                </div>
             </div>
             <div id="level-complete" class="hidden">
                 <h2>Niveau terminé !</h2>
                 <p>Distance: <span id="level-final-score">0</span>m</p>
-                <button id="level-restart-btn">Recommencer</button>
+                <div class="menu-buttons">
+                    <button id="level-restart-btn">Recommencer</button>
+                    <button id="level-main-menu-btn">Menu Principal</button>
+                </div>
+                <div class="controls-hint">
+                    <span>Entrée / N = Recommencer</span>
+                    <span>M = Menu Principal</span>
+                </div>
             </div>
         </div>
     </div>
