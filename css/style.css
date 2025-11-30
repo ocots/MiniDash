@@ -174,6 +174,9 @@ body {
     margin-top: 2vmin;
     font-size: 2vmin;
     color: #888;
+    display: flex;
+    justify-content: center;
+    gap: 4vmin;
 }
 
 /* Écran de fin de niveau (victoire) */
@@ -239,6 +242,9 @@ body {
     margin-top: 2vmin;
     font-size: 2vmin;
     color: #888;
+    display: flex;
+    justify-content: center;
+    gap: 4vmin;
 }
 
 /* Menu de sélection de niveau */
@@ -346,4 +352,148 @@ body {
     margin-top: 2vmin;
     font-size: 2vmin;
     color: #888;
+}
+
+/* Indicateur mode Debug */
+#debug-indicator {
+    position: absolute;
+    top: 2vmin;
+    right: 2vmin;
+    background: rgba(255, 100, 100, 0.9);
+    color: #fff;
+    padding: 0.8vmin 1.5vmin;
+    border-radius: 0.5vmin;
+    font-size: 2vmin;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 100;
+    animation: debug-pulse 1.5s ease-in-out infinite;
+}
+
+#debug-indicator.hidden {
+    display: none;
+}
+
+@keyframes debug-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Menu Pause */
+#pause-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 4vmin;
+    border-radius: 1.5vmin;
+    text-align: center;
+    color: #fff;
+    pointer-events: all;
+    z-index: 50;
+}
+
+#pause-menu.hidden {
+    display: none;
+}
+
+#pause-menu h2 {
+    font-size: 6vmin;
+    margin-bottom: 3vmin;
+    color: #ffd93d;
+}
+
+#resume-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.5vmin;
+    background: #ffd93d;
+    color: #000;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#resume-btn:hover {
+    background: #ffec8b;
+}
+
+#pause-main-menu-btn {
+    padding: 1.5vmin 4vmin;
+    font-size: 2.5vmin;
+    background: #666;
+    color: #fff;
+    border: none;
+    border-radius: 0.8vmin;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#pause-main-menu-btn:hover {
+    background: #888;
+}
+
+#pause-menu .controls-hint {
+    margin-top: 2vmin;
+    font-size: 2vmin;
+    color: #888;
+    display: flex;
+    justify-content: center;
+    gap: 4vmin;
+}
+
+/* Effet de flou sur le canvas en pause */
+#gameCanvas.paused {
+    filter: blur(5px);
+    transition: filter 0.2s ease;
+}
+
+/* Bouton pause mobile (coin bas droite) */
+#pause-mobile-btn {
+    position: absolute;
+    bottom: 2vmin;
+    right: 2vmin;
+    width: 10vmin;
+    height: 10vmin;
+    font-size: 5vmin;
+    background: rgba(255, 217, 61, 0.8);
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: all;
+    z-index: 40;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0.5vmin 1.5vmin rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, background 0.2s;
+}
+
+#pause-mobile-btn:hover {
+    transform: scale(1.1);
+    background: rgba(255, 217, 61, 1);
+}
+
+#pause-mobile-btn:active {
+    transform: scale(0.95);
+}
+
+#pause-mobile-btn.hidden {
+    display: none;
+}
+
+/* Afficher le bouton pause uniquement sur mobile/tactile */
+@media (hover: none) and (pointer: coarse) {
+    #pause-mobile-btn:not(.hidden) {
+        display: flex;
+    }
+}
+
+/* Cacher sur desktop par défaut */
+@media (hover: hover) and (pointer: fine) {
+    #pause-mobile-btn {
+        display: none !important;
+    }
 }

@@ -10,6 +10,7 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div id="ui">
+            <div id="debug-indicator" class="hidden">🔧 DEBUG</div>
             <div id="start-menu">
                 <h1>MiniDash</h1>
                 <p class="subtitle">Évite les obstacles, atteins l'arrivée !</p>
@@ -57,6 +58,18 @@
                     <span>M = Menu Principal</span>
                 </div>
             </div>
+            <div id="pause-menu" class="hidden">
+                <h2>Pause</h2>
+                <div class="menu-buttons">
+                    <button id="resume-btn">Reprendre</button>
+                    <button id="pause-main-menu-btn">Menu Principal</button>
+                </div>
+                <div class="controls-hint">
+                    <span>P / B = Reprendre</span>
+                    <span>M = Menu Principal</span>
+                </div>
+            </div>
+            <button id="pause-mobile-btn" class="hidden">⏸</button>
         </div>
     </div>
 

@@ -20,6 +20,10 @@ export class Player {
         this.velocityY = 0;
         this.isOnGround = true;
         this.isJumping = false;
+        
+        // Mode Debug : indicateur de collision
+        this.isColliding = false;
+        this.collisionFlashTimer = 0;
     }
     
     update(dt) {
@@ -43,6 +47,11 @@ export class Player {
         if (this.isJumping && this.isOnGround && !wasOnGround) {
             this.jump();
         }
+        
+        // Mise à jour du timer de flash de collision
+        if (this.collisionFlashTimer > 0) {
+            this.collisionFlashTimer -= dt;
+        }
     }
     
     draw(ctx) {
@@ -52,17 +61,20 @@ export class Player {
         const pw = Scale.toPixels(this.width);
         const ph = Scale.toPixels(this.height);
         
-        // Corps image (visuel)
-        ctx.fillStyle = CONFIG.PLAYER_COLOR;
+        // Corps image (visuel) - rouge si collision en mode debug
+        const isFlashing = this.collisionFlashTimer > 0;
+        ctx.fillStyle = isFlashing ? CONFIG.DEBUG.COLLISION_FLASH_COLOR : CONFIG.PLAYER_COLOR;
         ctx.fillRect(px, py, pw, ph);
         
-        // Bordure
-        ctx.strokeStyle = '#fff';
+        // Bordure (blanche ou rouge selon collision)
+        ctx.strokeStyle = isFlashing ? '#ff6666' : '#fff';
         ctx.lineWidth = 2;
         ctx.strokeRect(px, py, pw, ph);
         
-        // Debug: afficher les hitboxes (décommenter pour debug)
-        // this.drawDebugHitboxes(ctx);
+        // Debug: afficher les hitboxes si demandé
+        if (this.showHitboxes) {
+            this.drawDebugHitboxes(ctx);
+        }
     }
     
     drawDebugHitboxes(ctx) {

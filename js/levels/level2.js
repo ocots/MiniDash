@@ -101,12 +101,10 @@ export const level2 = {
         { type: 'triangle', x: 265, width: 1, height: 1 },
         { type: 'triangle', x: 270, width: 1, height: 1 },
         // Air: plateformes avec pièges
-        { type: 'plateformeAir', x: 258, y: 2, width: 3, height: 0.5,
-          carried: [{ type: 'triangle', relativeX: 1.8, width: 0.7, height: 0.7 }]
-        },
-        { type: 'plateformeAir', x: 264, y: 3, width: 3, height: 0.5 },
-        { type: 'plateformeAir', x: 270, y: 2, width: 3, height: 0.5,
-          carried: [{ type: 'triangle', relativeX: 0.2, width: 0.7, height: 0.7 }]
+        { type: 'plateformeAir', x: 258, y: 2, width: 3, height: 0.5 },
+        { type: 'plateformeAir', x: 262, y: 3, width: 5, height: 0.5 },
+        { type: 'plateformeAir', x: 269, y: 2, width: 4, height: 0.5,
+          carried: [{ type: 'triangle', relativeX: 2, width: 0.7, height: 0.7 }]
         },
 
         // =====================================================

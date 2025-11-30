@@ -3,6 +3,23 @@
 // Le système de rendu convertit automatiquement en pixels selon la taille de l'écran
 
 // ============================================================
+// MODE DEBUG
+// ============================================================
+
+const DEBUG = {
+    // Activer le mode debug par défaut
+    ENABLED: false,
+    
+    // Vitesse de téléportation (en mètres par appui)
+    TELEPORT_SPEED: 1,
+    TELEPORT_SPEED_FAST: 5,  // Avec Shift
+    
+    // Couleur du joueur quand il "serait mort"
+    COLLISION_FLASH_COLOR: '#ff0000',
+    COLLISION_FLASH_DURATION: 0.3,  // secondes (durée du flash rouge)
+};
+
+// ============================================================
 // PARAMÈTRES DE GAMEPLAY (à ajuster pour équilibrer le jeu)
 // ============================================================
 
@@ -39,6 +56,8 @@ const GRAVITY = (8 * GAMEPLAY.JUMP_HEIGHT) / (TIME_IN_AIR * TIME_IN_AIR);
 const JUMP_FORCE = -(4 * GAMEPLAY.JUMP_HEIGHT) / TIME_IN_AIR;
 
 export const CONFIG = {
+    // Mode Debug
+    DEBUG,
     // Ratio du canvas (16:9)
     ASPECT_RATIO: 16 / 9,
     
@@ -59,7 +78,7 @@ export const CONFIG = {
     
     // Joueur (en unités)
     PLAYER_SIZE: 1,
-    PLAYER_X: 8 , // Position fixe X du joueur (en unités)
+    PLAYER_X: 8, // Position fixe X du joueur (en unités)
     PLAYER_COLOR: '#4ecdc4',
     
     // Monde (en unités)
