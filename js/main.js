@@ -457,6 +457,7 @@ class Game {
         
         // Créer le joueur
         this.player = new Player();
+        this.player.showDebugState = this.debugMode;
         this.engine.addEntity(this.player);
         
         // Charger le niveau
@@ -814,6 +815,10 @@ class Game {
         this._saveDebugMode(this.debugMode);
         this.updateDebugIndicator();
         console.log(`Mode Debug: ${this.debugMode ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
+
+        if (this.player) {
+            this.player.showDebugState = this.debugMode;
+        }
     }
     
     updateDebugIndicator() {

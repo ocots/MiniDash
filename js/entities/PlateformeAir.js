@@ -141,12 +141,11 @@ export class PlateformeAir extends Entity {
                 player.landOnPlatform(platformPhys.y);
             } else if (minOverlap === overlapBottom) {
                 // Le joueur se cogne la tête
-                player.y = platformPhys.y + platformPhys.height;
-                player.velocityY = 0;
+                player.hitHead(platformPhys.y + platformPhys.height);
             } else if (minOverlap === overlapLeft) {
-                player.x = platformPhys.x - player.width;
+                player.pushLeftOf(platformPhys.x);
             } else if (minOverlap === overlapRight) {
-                player.x = platformPhys.x + platformPhys.width;
+                player.pushRightOf(platformPhys.x + platformPhys.width);
             }
         }
         

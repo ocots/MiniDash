@@ -107,12 +107,11 @@ export class Obstacle extends Entity {
         if (minOverlap === overlapTop) {
             player.landOnPlatform(obstaclePhys.y);
         } else if (minOverlap === overlapBottom) {
-            player.y = obstaclePhys.y + obstaclePhys.height;
-            player.velocityY = 0;
+            player.hitHead(obstaclePhys.y + obstaclePhys.height);
         } else if (minOverlap === overlapLeft) {
-            player.x = obstaclePhys.x - player.width;
+            player.pushLeftOf(obstaclePhys.x);
         } else if (minOverlap === overlapRight) {
-            player.x = obstaclePhys.x + obstaclePhys.width;
+            player.pushRightOf(obstaclePhys.x + obstaclePhys.width);
         }
     }
     

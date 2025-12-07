@@ -28,6 +28,7 @@ export class Player {
         // Mode Debug : indicateur de collision
         this.isColliding = false;
         this.collisionFlashTimer = 0;
+        this.showDebugState = false;
         
         // Référence au gestionnaire de skins
         this.skinManager = skinManager;
@@ -75,6 +76,21 @@ export class Player {
         if (this.showHitboxes) {
             this.drawDebugHitboxes(ctx);
         }
+
+        if (this.showDebugState) {
+            const stateText = this.state && this.state.current ? this.state.current : '';
+            if (stateText) {
+                const px = Scale.toPixels(this.x);
+                const py = Scale.toPixels(this.y);
+                const pw = Scale.toPixels(this.width);
+                ctx.save();
+                ctx.font = '12px monospace';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.fillText(stateText, px + pw / 2, py - 4);
+                ctx.restore();
+            }
+        }
     }
     
     drawDebugHitboxes(ctx) {
@@ -117,6 +133,19 @@ export class Player {
             !this.state.is(PlayerStates.DISABLED)) {
             this._doJump();
         }
+    }
+    
+    hitHead(surfaceBottomY) {
+        this.y = surfaceBottomY;
+        this.velocityY = 0;
+    }
+    
+    pushLeftOf(surfaceX) {
+        this.x = surfaceX - this.width;
+    }
+    
+    pushRightOf(surfaceX) {
+        this.x = surfaceX;
     }
     
     jump() {
