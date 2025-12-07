@@ -19,6 +19,22 @@ body {
     font-family: 'Arial', sans-serif;
 }
 
+:root {
+    --ui-scale: 1;
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --ui-scale: 1.2;
+    }
+}
+
+@media (max-width: 600px) {
+    :root {
+        --ui-scale: 1.5;
+    }
+}
+
 #game-container {
     position: relative;
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
@@ -59,7 +75,7 @@ body {
 }
 
 #start-menu h1 {
-    font-size: 12vmin;
+    font-size: calc(12vmin * var(--ui-scale));
     margin-bottom: 2vmin;
     color: #4ecdc4;
     text-shadow: 0.4vmin 0.4vmin 0.8vmin rgba(0, 0, 0, 0.5);
@@ -67,14 +83,14 @@ body {
 }
 
 #start-menu .subtitle {
-    font-size: 3vmin;
+    font-size: calc(3vmin * var(--ui-scale));
     margin-bottom: 4vmin;
     color: #ccc;
 }
 
 #start-btn {
     padding: 2vmin 6vmin;
-    font-size: 4vmin;
+    font-size: calc(4vmin * var(--ui-scale));
     background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
     color: #fff;
     border: none;
@@ -91,7 +107,7 @@ body {
 
 #start-menu .controls-hint {
     margin-top: 4vmin;
-    font-size: 2vmin;
+    font-size: calc(2vmin * var(--ui-scale));
     color: #888;
     display: flex;
     justify-content: center;
@@ -130,19 +146,19 @@ body {
 }
 
 #game-over h2 {
-    font-size: 6vmin;
+    font-size: calc(6vmin * var(--ui-scale));
     margin-bottom: 2vmin;
     color: #ff6b6b;
 }
 
 #game-over p {
-    font-size: 3vmin;
+    font-size: calc(3vmin * var(--ui-scale));
     margin-bottom: 3vmin;
 }
 
 #restart-btn {
     padding: 1.5vmin 4vmin;
-    font-size: 2.5vmin;
+    font-size: calc(2.5vmin * var(--ui-scale));
     background: #4ecdc4;
     color: #fff;
     border: none;
@@ -172,7 +188,7 @@ body {
 
 #game-over .controls-hint {
     margin-top: 2vmin;
-    font-size: 2vmin;
+    font-size: calc(2vmin * var(--ui-scale));
     color: #888;
     display: flex;
     justify-content: center;
@@ -198,13 +214,13 @@ body {
 }
 
 #level-complete h2 {
-    font-size: 6vmin;
+    font-size: calc(6vmin * var(--ui-scale));
     margin-bottom: 2vmin;
     color: #00ff88;
 }
 
 #level-complete p {
-    font-size: 3vmin;
+    font-size: calc(3vmin * var(--ui-scale));
     margin-bottom: 3vmin;
 }
 
@@ -240,7 +256,7 @@ body {
 
 #level-complete .controls-hint {
     margin-top: 2vmin;
-    font-size: 2vmin;
+    font-size: calc(2vmin * var(--ui-scale));
     color: #888;
     display: flex;
     justify-content: center;
@@ -274,7 +290,7 @@ body {
 
 .level-name {
     margin-top: 2vmin;
-    font-size: 2.5vmin;
+    font-size: calc(2.5vmin * var(--ui-scale));
     color: #aaa;
     font-style: italic;
 }
@@ -298,7 +314,7 @@ body {
 }
 
 #level-select-menu h2 {
-    font-size: 5vmin;
+    font-size: calc(5vmin * var(--ui-scale));
     margin-bottom: 3vmin;
     color: #4ecdc4;
 }
@@ -350,7 +366,7 @@ body {
 
 #level-select-menu .controls-hint {
     margin-top: 2vmin;
-    font-size: 2vmin;
+    font-size: calc(2vmin * var(--ui-scale));
     color: #888;
 }
 
@@ -399,7 +415,7 @@ body {
 }
 
 #pause-menu h2 {
-    font-size: 6vmin;
+    font-size: calc(6vmin * var(--ui-scale));
     margin-bottom: 3vmin;
     color: #ffd93d;
 }
@@ -436,7 +452,7 @@ body {
 
 #pause-menu .controls-hint {
     margin-top: 2vmin;
-    font-size: 2vmin;
+    font-size: calc(2vmin * var(--ui-scale));
     color: #888;
     display: flex;
     justify-content: center;
@@ -452,7 +468,7 @@ body {
 /* Bouton pause mobile (coin bas droite) */
 #pause-mobile-btn {
     position: absolute;
-    bottom: 2vmin;
+    bottom: 1vmin;
     right: 2vmin;
     width: 10vmin;
     height: 10vmin;
@@ -537,7 +553,7 @@ body {
 }
 
 #skin-select-menu h2 {
-    font-size: 5vmin;
+    font-size: calc(5vmin * var(--ui-scale));
     margin-bottom: 2vmin;
     color: #ff6b6b;
 }
@@ -644,7 +660,7 @@ body {
 }
 
 #skin-preview-name {
-    font-size: 3vmin;
+    font-size: calc(3vmin * var(--ui-scale));
     font-weight: bold;
     color: #fff;
 }
@@ -682,7 +698,7 @@ body {
 
 #skin-select-menu .controls-hint {
     margin-top: 2vmin;
-    font-size: 2vmin;
+    font-size: calc(2vmin * var(--ui-scale));
     color: #888;
 }
 
