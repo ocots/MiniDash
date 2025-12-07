@@ -2,6 +2,7 @@ import { CONFIG } from '../config.js';
 import { Scale } from '../engine/Scale.js';
 import { rectToPolygon } from '../utils/collision.js';
 import { skinManager } from '../skins/index.js';
+import { PlayerStates, PlayerStateMachine } from '../engine/PlayerState.js';
 
 /**
  * Le joueur - toutes les coordonnées sont en UNITÉS LOGIQUES.
@@ -21,6 +22,8 @@ export class Player {
         this.velocityY = 0;
         this.isOnGround = true;
         this.isJumping = false;
+        this.jumpHeld = false;
+        this.state = new PlayerStateMachine(PlayerStates.GROUNDED);
         
         // Mode Debug : indicateur de collision
         this.isColliding = false;
@@ -32,24 +35,22 @@ export class Player {
     
     update(dt) {
         // Sauvegarder l'état précédent
-        const wasOnGround = this.isOnGround;
-        
         // Appliquer la gravité (en unités/s², multiplié par dt pour être indépendant du framerate)
         this.velocityY += CONFIG.GRAVITY * dt;
         this.y += this.velocityY * dt;
+
+        if (this.state.is(PlayerStates.JUMP_RISING) && this.velocityY >= 0) {
+            this.state.transitionTo(PlayerStates.FALLING);
+        }
         
         // Vérifier le sol
         if (this.y >= this.groundY) {
-            this.y = this.groundY;
-            this.velocityY = 0;
-            this.isOnGround = true;
+            this.landOnGround();
         } else {
+            if (this.state.is(PlayerStates.GROUNDED)) {
+                this.state.transitionTo(PlayerStates.FALLING);
+            }
             this.isOnGround = false;
-        }
-        
-        // Rebond automatique si la touche est maintenue et qu'on vient d'atterrir
-        if (this.isJumping && this.isOnGround && !wasOnGround) {
-            this.jump();
         }
         
         // Mise à jour du timer de flash de collision
@@ -92,20 +93,59 @@ export class Player {
                        Scale.toPixels(hurt.width), Scale.toPixels(hurt.height));
     }
     
-    jump() {
-        if (this.isOnGround) {
-            this.velocityY = CONFIG.JUMP_FORCE;
-            this.isOnGround = false;
+    landOnGround() {
+        const wasGrounded = this.state.is(PlayerStates.GROUNDED);
+        this.y = this.groundY;
+        this.velocityY = 0;
+        this.state.transitionTo(PlayerStates.GROUNDED);
+        this.isOnGround = true;
+        if (!wasGrounded && this.jumpHeld &&
+            !this.state.is(PlayerStates.DYING) &&
+            !this.state.is(PlayerStates.DISABLED)) {
+            this._doJump();
         }
+    }
+    
+    landOnPlatform(surfaceY) {
+        const wasGrounded = this.state.is(PlayerStates.GROUNDED);
+        this.y = surfaceY - this.height;
+        this.velocityY = 0;
+        this.state.transitionTo(PlayerStates.GROUNDED);
+        this.isOnGround = true;
+        if (!wasGrounded && this.jumpHeld &&
+            !this.state.is(PlayerStates.DYING) &&
+            !this.state.is(PlayerStates.DISABLED)) {
+            this._doJump();
+        }
+    }
+    
+    jump() {
+        if (!this.state.is(PlayerStates.GROUNDED)) {
+            return;
+        }
+        if (this.state.is(PlayerStates.DYING) || this.state.is(PlayerStates.DISABLED)) {
+            return;
+        }
+        this._doJump();
+    }
+    
+    _doJump() {
+        this.velocityY = CONFIG.JUMP_FORCE;
+        this.state.transitionTo(PlayerStates.JUMP_RISING);
+        this.isOnGround = false;
     }
     
     startJump() {
         this.isJumping = true;
-        this.jump();
+        this.jumpHeld = true;
+        if (!this.state.is(PlayerStates.DYING) && !this.state.is(PlayerStates.DISABLED)) {
+            this.jump();
+        }
     }
     
     stopJump() {
         this.isJumping = false;
+        this.jumpHeld = false;
     }
     
     // Corps image (pour le rendu, égal aux dimensions de base)

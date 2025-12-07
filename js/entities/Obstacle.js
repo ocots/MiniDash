@@ -105,9 +105,7 @@ export class Obstacle extends Entity {
         const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
         
         if (minOverlap === overlapTop) {
-            player.y = obstaclePhys.y - player.height;
-            player.velocityY = 0;
-            player.isOnGround = true;
+            player.landOnPlatform(obstaclePhys.y);
         } else if (minOverlap === overlapBottom) {
             player.y = obstaclePhys.y + obstaclePhys.height;
             player.velocityY = 0;

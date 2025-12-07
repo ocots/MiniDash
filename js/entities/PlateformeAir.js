@@ -138,9 +138,7 @@ export class PlateformeAir extends Entity {
             
             if (minOverlap === overlapTop) {
                 // Le joueur atterrit sur la plateforme
-                player.y = platformPhys.y - player.height;
-                player.velocityY = 0;
-                player.isOnGround = true;
+                player.landOnPlatform(platformPhys.y);
             } else if (minOverlap === overlapBottom) {
                 // Le joueur se cogne la tête
                 player.y = platformPhys.y + platformPhys.height;
