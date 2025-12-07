@@ -784,6 +784,9 @@ class Game {
                 if (this.debugMode) {
                     this.player.collisionFlashTimer = CONFIG.DEBUG.COLLISION_FLASH_DURATION;
                 } else {
+                    if (this.player && typeof this.player.die === 'function') {
+                        this.player.die();
+                    }
                     this.scoreElement.textContent = `Distance: ${distance}m`;
                     this.state.transitionTo(GameStates.GAME_OVER);
                     return;

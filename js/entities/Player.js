@@ -177,6 +177,16 @@ export class Player {
         this.jumpHeld = false;
     }
     
+    die() {
+        if (this.state.is(PlayerStates.DYING) || this.state.is(PlayerStates.DISABLED)) {
+            return;
+        }
+        this.state.transitionTo(PlayerStates.DYING);
+        this.isJumping = false;
+        this.jumpHeld = false;
+        this.velocityY = 0;
+    }
+    
     // Corps image (pour le rendu, égal aux dimensions de base)
     getImageBody() {
         return {
