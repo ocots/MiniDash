@@ -349,6 +349,22 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+.level-select-btn.extreme {
+    background: linear-gradient(135deg, #ff4e50 0%, #f9d423 100%);
+    font-weight: bold;
+    box-shadow: 0 0 2vmin rgba(255, 78, 80, 0.5);
+}
+
+.level-select-btn.extreme:hover {
+    background: linear-gradient(135deg, #ff6b6d 0%, #ffd93d 100%);
+    box-shadow: 0 0 3vmin rgba(255, 78, 80, 0.7);
+}
+
+.level-select-btn.extreme.current {
+    background: linear-gradient(135deg, #d63031 0%, #e17055 100%);
+    box-shadow: 0 0 3vmin rgba(214, 48, 49, 0.8);
+}
+
 #cancel-level-select-btn {
     padding: 1.5vmin 4vmin;
     font-size: 2.5vmin;

@@ -497,6 +497,10 @@ class Game {
             btn.textContent = level.name;
             btn.dataset.levelIndex = level.index;
             
+            if (level.index === 2) {
+                btn.classList.add('extreme');
+            }
+            
             if (level.index === this.selectedLevelIndex) {
                 btn.classList.add('current');
             }

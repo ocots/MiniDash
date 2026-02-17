@@ -6,13 +6,14 @@ import { PlateformeAir } from '../entities/PlateformeAir.js';
 import { Finish } from '../entities/Finish.js';
 import { level1 } from './level1.js';
 import { level2 } from './level2.js';
+import { level3 } from './level3.js';
 
 // Conversion mètres -> unités logiques
 const metersToUnits = (meters) => meters * CONFIG.UNITS_PER_METER;
 
 export class LevelManager {
     constructor() {
-        this.levels = [level1, level2];
+        this.levels = [level1, level2, level3];
         this.currentLevelIndex = 0;
         this.currentLevel = null;
         this.obstaclesSpawned = [];
